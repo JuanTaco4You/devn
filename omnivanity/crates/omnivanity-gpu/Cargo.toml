@@ -1,0 +1,25 @@
+[package]
+name = "omnivanity-gpu"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = ["cuda"]
+cuda = ["cudarc"]
+
+[dependencies]
+omnivanity-crypto = { workspace = true }
+omnivanity-chains = { workspace = true }
+omnivanity-pattern = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+
+# CUDA
+cudarc = { version = "0.12", optional = true, features = ["cuda-12050"] }
+
+# For fallback/OpenCL
+# opencl3 = { version = "0.9", optional = true }
+
+[build-dependencies]
+cc = "1"

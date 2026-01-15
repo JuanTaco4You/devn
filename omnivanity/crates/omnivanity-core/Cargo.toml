@@ -1,0 +1,16 @@
+[package]
+name = "omnivanity-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+omnivanity-crypto = { workspace = true }
+omnivanity-chains = { workspace = true }
+omnivanity-pattern = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rayon = { workspace = true }
+crossbeam-channel = { workspace = true }
+tracing = { workspace = true }
+num_cpus = "1.16"

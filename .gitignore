@@ -1,0 +1,30 @@
+# Rust build artifacts
+target/
+**/target/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug files
+*.pdb
+
+# Cargo lock for libraries (keep for binaries)
+# Cargo.lock
+
+# Environment files
+.env
+.env.local
+
+# Node modules (for Tauri frontend)
+node_modules/
+
+# Build output
+dist/
+build/

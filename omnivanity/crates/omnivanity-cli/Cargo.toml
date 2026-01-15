@@ -1,0 +1,23 @@
+[package]
+name = "omnivanity-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "omnivanity"
+path = "src/main.rs"
+
+[features]
+default = []
+gpu = ["omnivanity-gpu"]
+
+[dependencies]
+omnivanity-core = { workspace = true }
+omnivanity-gpu = { path = "../omnivanity-gpu", optional = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+num_cpus = "1.16"

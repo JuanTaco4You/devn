@@ -1,0 +1,17 @@
+[package]
+name = "omnivanity-crypto"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+k256 = { workspace = true }
+ed25519-dalek = { workspace = true }
+sha2 = { workspace = true }
+sha3 = { workspace = true }
+ripemd = { workspace = true }
+bs58 = { workspace = true }
+bech32 = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
+rand_core = { workspace = true }
+thiserror = { workspace = true }
