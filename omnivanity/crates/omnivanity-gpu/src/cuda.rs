@@ -99,14 +99,11 @@ pub struct CudaEvmEngine {
 impl CudaEvmEngine {
     /// Create new CUDA context for EVM
     pub fn new(device_index: usize) -> Result<Self, CudaError> {
-        let device = CudaDevice::new(device_index)?;
+        let device: std::sync::Arc<CudaDevice> = CudaDevice::new(device_index)?;
         
         info!("Initialized CUDA device {}", device_index);
         
-        Ok(Self {
-            device: std::sync::Arc::new(device),
-            device_index,
-        })
+        Ok(Self { device, device_index })
     }
 
     /// Benchmark GPU throughput (placeholder)

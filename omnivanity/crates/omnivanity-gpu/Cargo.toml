@@ -4,7 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [features]
-default = ["cuda"]
+default = ["wgpu-backend"]
+wgpu-backend = ["wgpu", "bytemuck"]
 cuda = ["cudarc"]
 
 [dependencies]
@@ -14,12 +15,16 @@ omnivanity-pattern = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
+rand = { workspace = true }
+hex = "0.4"
 
-# CUDA
+# wgpu (cross-platform GPU - Tier 1 default)
+wgpu = { version = "23", optional = true }
+bytemuck = { version = "1.16", features = ["derive"], optional = true }
+pollster = "0.4"
+
+# CUDA (NVIDIA only - Tier 2 optional)
 cudarc = { version = "0.12", optional = true, features = ["cuda-12050"] }
-
-# For fallback/OpenCL
-# opencl3 = { version = "0.9", optional = true }
 
 [build-dependencies]
 cc = "1"

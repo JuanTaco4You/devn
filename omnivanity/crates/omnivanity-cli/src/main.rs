@@ -11,6 +11,9 @@ use omnivanity_core::{
 };
 use std::io::Write;
 
+#[cfg(feature = "gpu")]
+use omnivanity_gpu::{list_devices, is_gpu_available};
+
 #[derive(Parser)]
 #[command(name = "omnivanity")]
 #[command(author = "OmniVanity Team")]
@@ -45,7 +48,7 @@ enum Commands {
         #[arg(short = 'i', long)]
         case_insensitive: bool,
 
-        /// Number of threads (0 = auto)
+        /// Number of threads (0 = auto, ignored with --gpu)
         #[arg(long, default_value = "0")]
         threads: usize,
 
@@ -60,10 +63,22 @@ enum Commands {
         /// Output as JSON
         #[arg(long)]
         json: bool,
+
+        /// Use GPU for search (requires CUDA)
+        #[arg(long)]
+        gpu: bool,
+
+        /// GPU device indices to use (comma-separated, e.g., 0,1)
+        #[arg(long)]
+        device: Option<String>,
     },
 
     /// List supported chains
     Chains,
+
+    /// List available GPU devices
+    #[cfg(feature = "gpu")]
+    GpuList,
 
     /// Run benchmark
     Benchmark {
@@ -78,6 +93,14 @@ enum Commands {
         /// Number of threads (0 = auto)
         #[arg(long, default_value = "0")]
         threads: usize,
+
+        /// Use GPU for benchmark
+        #[arg(long)]
+        gpu: bool,
+
+        /// GPU device indices (comma-separated)
+        #[arg(long)]
+        device: Option<String>,
     },
 }
 
@@ -96,6 +119,13 @@ impl From<PatternTypeArg> for PatternType {
             PatternTypeArg::Contains => PatternType::Contains,
         }
     }
+}
+
+/// Search mode: CPU or GPU
+#[derive(Clone, Copy, Debug)]
+enum SearchMode {
+    Cpu,
+    Gpu,
 }
 
 fn main() -> Result<()> {
@@ -120,7 +150,12 @@ fn main() -> Result<()> {
             max_attempts,
             max_time,
             json,
+            gpu,
+            device,
         } => {
+            let mode = if gpu { SearchMode::Gpu } else { SearchMode::Cpu };
+            let device_indices = parse_device_indices(device.as_deref());
+            
             cmd_generate(
                 &chain,
                 &pattern,
@@ -131,21 +166,41 @@ fn main() -> Result<()> {
                 max_attempts,
                 max_time,
                 json,
+                mode,
+                device_indices,
             )?;
         }
         Commands::Chains => {
             cmd_chains();
         }
+        #[cfg(feature = "gpu")]
+        Commands::GpuList => {
+            cmd_gpu_list();
+        }
         Commands::Benchmark {
             chain,
             duration,
             threads,
+            gpu,
+            device,
         } => {
-            cmd_benchmark(&chain, duration, threads)?;
+            let mode = if gpu { SearchMode::Gpu } else { SearchMode::Cpu };
+            let device_indices = parse_device_indices(device.as_deref());
+            cmd_benchmark(&chain, duration, threads, mode, device_indices)?;
         }
     }
 
     Ok(())
+}
+
+fn parse_device_indices(device: Option<&str>) -> Vec<usize> {
+    match device {
+        Some(s) => s
+            .split(',')
+            .filter_map(|d| d.trim().parse().ok())
+            .collect(),
+        None => vec![],
+    }
 }
 
 fn cmd_generate(
@@ -158,6 +213,8 @@ fn cmd_generate(
     max_attempts: u64,
     max_time: u64,
     json_output: bool,
+    mode: SearchMode,
+    device_indices: Vec<usize>,
 ) -> Result<()> {
     // Get chain
     let chain = get_chain(chain_ticker)
@@ -187,11 +244,56 @@ fn cmd_generate(
             pattern_type,
             if case_insensitive { ", case-insensitive" } else { "" }
         );
-        eprintln!("Threads: {}", if threads == 0 { num_cpus::get() } else { threads });
+        
+        match mode {
+            SearchMode::Cpu => {
+                eprintln!("Mode: CPU");
+                eprintln!("Threads: {}", if threads == 0 { num_cpus::get() } else { threads });
+            }
+            SearchMode::Gpu => {
+                eprintln!("Mode: GPU");
+                if device_indices.is_empty() {
+                    eprintln!("Devices: All available");
+                } else {
+                    eprintln!("Devices: {:?}", device_indices);
+                }
+            }
+        }
         eprintln!();
     }
 
-    // Create search config
+    // Run search based on mode
+    match mode {
+        SearchMode::Cpu => {
+            run_cpu_search(chain_ticker, address_type, pat, threads, max_attempts, max_time, json_output)?;
+        }
+        SearchMode::Gpu => {
+            #[cfg(feature = "gpu")]
+            {
+                run_gpu_search(chain_ticker, address_type, pat, max_attempts, max_time, json_output, device_indices)?;
+            }
+            #[cfg(not(feature = "gpu"))]
+            {
+                anyhow::bail!("GPU support not compiled. Rebuild with --features gpu");
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn run_cpu_search(
+    chain_ticker: &str,
+    address_type: AddressType,
+    pat: Pattern,
+    threads: usize,
+    max_attempts: u64,
+    max_time: u64,
+    json_output: bool,
+) -> Result<()> {
+    let chain = get_chain(chain_ticker)
+        .ok_or_else(|| anyhow::anyhow!("Unknown chain: {}", chain_ticker))?;
+    
     let config = SearchConfig {
         threads,
         batch_size: 1000,
@@ -199,7 +301,6 @@ fn cmd_generate(
         max_time_secs: max_time,
     };
 
-    // Create search
     let search = VanitySearch::new(
         chain,
         address_type,
@@ -213,7 +314,6 @@ fn cmd_generate(
         eprintln!();
     }
 
-    // Run search
     let result = search.run();
 
     match result {
@@ -233,6 +333,74 @@ fn cmd_generate(
         }
     }
 
+    Ok(())
+}
+
+#[cfg(feature = "gpu")]
+fn run_gpu_search(
+    chain_ticker: &str,
+    _address_type: AddressType,
+    _pat: Pattern,
+    max_attempts: u64,
+    max_time: u64,
+    json_output: bool,
+    device_indices: Vec<usize>,
+) -> Result<()> {
+    use omnivanity_gpu::{GpuSearchConfig, is_wgpu_available, list_devices, WgpuEngine};
+
+    if !is_wgpu_available() {
+        anyhow::bail!("No GPU found. Use CPU mode instead.");
+    }
+
+    // Currently only EVM is supported on GPU
+    if chain_ticker != "ETH" {
+        anyhow::bail!("GPU search currently only supports ETH/EVM. Use --gpu with -c ETH");
+    }
+
+    let config = GpuSearchConfig {
+        device_indices: device_indices.clone(),
+        grid_size: 0, // auto
+        block_size: 256,
+        keys_per_thread: 256,
+        max_attempts,
+        max_time_secs: max_time,
+    };
+
+    // List available devices
+    if !json_output {
+        let devices = list_devices();
+        eprintln!("GPU Backend: wgpu (cross-platform)");
+        eprintln!("Available devices: {}", devices.len());
+        for dev in &devices {
+            eprintln!("  [{}] {} ({})", dev.index, dev.name, dev.backend);
+        }
+        eprintln!();
+    }
+
+    // Create wgpu engine
+    let device_idx = device_indices.first().copied().unwrap_or(0);
+    let engine = WgpuEngine::new_sync(device_idx, config)
+        .map_err(|e| anyhow::anyhow!("Failed to create wgpu engine: {}", e))?;
+
+    if !json_output {
+        eprintln!("Starting GPU search on: {}", engine.device_name());
+        eprintln!("(Full GPU search implementation in progress)");
+    }
+
+    // TODO: Implement full GPU search with pattern matching and result extraction
+    // For now, run benchmark to verify GPU works
+    match engine.benchmark(3) {
+        Ok(keys_per_sec) => {
+            if !json_output {
+                let mkeys = keys_per_sec / 1_000_000.0;
+                eprintln!("GPU speed: {:.2} Mkey/s", mkeys);
+            }
+        }
+        Err(e) => {
+            eprintln!("GPU benchmark failed: {}", e);
+        }
+    }
+    
     Ok(())
 }
 
@@ -258,35 +426,103 @@ fn cmd_chains() {
     }
 }
 
-fn cmd_benchmark(chain_ticker: &str, duration_secs: u64, threads: usize) -> Result<()> {
+#[cfg(feature = "gpu")]
+fn cmd_gpu_list() {
+    println!("Available GPU Devices:");
+    println!("{:-<60}", "");
+    
+    if !is_gpu_available() {
+        println!("No CUDA-capable GPUs found.");
+        println!("Make sure NVIDIA drivers and CUDA toolkit are installed.");
+        return;
+    }
+
+    let devices = list_devices();
+    if devices.is_empty() {
+        println!("No GPU devices detected.");
+        return;
+    }
+
+    for dev in &devices {
+        println!(
+            "[{}] {} - {} ({}, {} SMs)",
+            dev.index,
+            dev.name,
+            dev.backend,
+            dev.memory_formatted(),
+            dev.multiprocessors
+        );
+    }
+    
+    println!();
+    println!("Use --gpu --device N to select specific devices.");
+}
+
+fn cmd_benchmark(
+    chain_ticker: &str, 
+    duration_secs: u64, 
+    threads: usize,
+    mode: SearchMode,
+    device_indices: Vec<usize>,
+) -> Result<()> {
     let chain = get_chain(chain_ticker)
         .ok_or_else(|| anyhow::anyhow!("Unknown chain: {}", chain_ticker))?;
 
     let address_type = chain.default_address_type();
 
     eprintln!("Benchmarking {} for {} seconds...", chain.name(), duration_secs);
-    eprintln!("Threads: {}", if threads == 0 { num_cpus::get() } else { threads });
+    
+    match mode {
+        SearchMode::Cpu => {
+            eprintln!("Mode: CPU");
+            eprintln!("Threads: {}", if threads == 0 { num_cpus::get() } else { threads });
+        }
+        SearchMode::Gpu => {
+            eprintln!("Mode: GPU");
+            if device_indices.is_empty() {
+                eprintln!("Devices: All available");
+            } else {
+                eprintln!("Devices: {:?}", device_indices);
+            }
+        }
+    }
     eprintln!();
 
-    // Use an impossible pattern to run until timeout
-    let pat = Pattern::prefix("zzzzzzzzzzzzzzzzzzz");
-    
-    let config = SearchConfig {
-        threads,
-        batch_size: 1000,
-        max_attempts: 0,
-        max_time_secs: duration_secs,
-    };
+    match mode {
+        SearchMode::Cpu => {
+            // Use an impossible pattern to run until timeout
+            let pat = Pattern::prefix("zzzzzzzzzzzzzzzzzzz");
+            
+            let config = SearchConfig {
+                threads,
+                batch_size: 1000,
+                max_attempts: 0,
+                max_time_secs: duration_secs,
+            };
 
-    let search = VanitySearch::new(
-        chain,
-        address_type,
-        vec![pat],
-        config,
-    );
+            let search = VanitySearch::new(
+                chain,
+                address_type,
+                vec![pat],
+                config,
+            );
 
-    // Run search (will timeout)
-    let _ = search.run();
+            let _ = search.run();
+        }
+        SearchMode::Gpu => {
+            #[cfg(feature = "gpu")]
+            {
+                if !is_gpu_available() {
+                    anyhow::bail!("No CUDA-capable GPU found.");
+                }
+                eprintln!("GPU benchmark not yet implemented.");
+            }
+            #[cfg(not(feature = "gpu"))]
+            {
+                anyhow::bail!("GPU support not compiled.");
+            }
+        }
+    }
 
     eprintln!("\nBenchmark complete!");
 

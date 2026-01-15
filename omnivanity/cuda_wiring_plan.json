@@ -1,0 +1,159 @@
+{
+  "title": "OmniVanity CUDA Wiring Plan",
+  "version": "1.0",
+  "goals": [
+    "Add a CUDA execution path that can generate and test vanity addresses on GPU",
+    "Keep CPU search working as-is and use GPU only when requested or available",
+    "Support multi-GPU by partitioning work across devices",
+    "Produce the same address results as the existing CPU chain implementations"
+  ],
+  "constraints": [
+    "No breaking changes to current CLI/GUI behavior by default",
+    "Feature-gated CUDA build (no CUDA required for CPU-only builds)",
+    "GPU path must be deterministic and reproducible for tests when given a fixed seed",
+    "Must align address derivation with omnivanity-chains implementations"
+  ],
+  "current_state": {
+    "cpu_search": "VanitySearch in crates/omnivanity-core/src/search.rs",
+    "gpu_crate": "omnivanity-gpu with GpuVanitySearch trait and cuda.rs device listing",
+    "cuda_kernel": "crates/omnivanity-gpu/src/kernels/evm_vanity.cu (placeholder secp256k1)",
+    "cli_gui": "CLI and Tauri GUI use CPU search only",
+    "gaps": [
+      "No GPU search engine implementation",
+      "No wiring from CLI/GUI to GPU search",
+      "No kernel compilation or launch pipeline",
+      "CUDA kernel lacks real secp256k1 pubkey derivation"
+    ]
+  },
+  "design": {
+    "entrypoints": {
+      "cpu": "VanitySearch::run (current)",
+      "gpu": "New GPU runner that uses omnivanity-gpu::GpuVanitySearch"
+    },
+    "gpu_selection": {
+      "config_fields": [
+        "device_indices (empty means all)",
+        "grid_size (0 auto)",
+        "block_size",
+        "keys_per_thread",
+        "max_attempts",
+        "max_time_secs"
+      ],
+      "source": "Omnivanity CLI flags and GUI options",
+      "default_behavior": "GPU path only if user opts-in or env flag enabled"
+    },
+    "kernel_strategy": {
+      "initial_chain": "EVM only, because CUDA kernel exists",
+      "future_chains": ["Solana/ed25519", "others"],
+      "code_source": "Compile evm_vanity.cu to PTX at build time or via NVRTC",
+      "compile_options": [
+        "Fast math where safe",
+        "Compute capability set from device",
+        "Embed PTX into binary for faster startup"
+      ]
+    },
+    "seed_strategy": {
+      "goal": "Generate disjoint key ranges across threads and devices",
+      "approach": [
+        "Host creates a base seed per device",
+        "Each CUDA thread gets a 32-byte seed (4 x u64)",
+        "Per-thread loop increments seed to test keys_per_thread keys",
+        "Device index and launch iteration are mixed into seed to avoid overlap"
+      ],
+      "determinism": "Use a fixed PRNG seed when tests need reproducible runs"
+    },
+    "pattern_strategy": {
+      "phase1": "Prefix-only on GPU for EVM hex addresses",
+      "phase2": "Add suffix and contains on GPU, or do GPU prefilter + CPU verify",
+      "encoding": "Pack pattern nibbles into bytes, pass length and case flag",
+      "validation": "Reuse Pattern validation logic on CPU before GPU launch"
+    },
+    "result_strategy": {
+      "device_outputs": [
+        "found flag per thread",
+        "matching privkey bytes",
+        "matching address bytes"
+      ],
+      "host_processing": [
+        "Scan found flags",
+        "Reconstruct GeneratedAddress using omnivanity-chains",
+        "Verify pattern match on CPU to guard against GPU bugs"
+      ]
+    },
+    "multi_gpu": {
+      "model": "One host thread per device; each manages its own stream and buffers",
+      "stop_condition": "First match sets shared atomic stop flag",
+      "work_partition": "Each device uses a distinct seed range offset",
+      "stats": "Aggregate keys tested across devices and report combined rate"
+    }
+  },
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Wire in GPU selection and configuration",
+      "steps": [
+        "Define a GPU search mode enum or flag in CLI and GUI (opt-in)",
+        "Map CLI/GUI options to GpuSearchConfig",
+        "Add a high-level orchestrator that chooses CPU or GPU path",
+        "Expose GPU device list for UI display"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Implement CUDA host pipeline",
+      "steps": [
+        "Create an EvmCudaEngine that implements GpuVanitySearch",
+        "Load or compile PTX for evm_vanity.cu",
+        "Allocate device buffers (seeds, flags, privkeys, addresses)",
+        "Launch kernel in chunks, poll for results, honor stop flag",
+        "Compute keys_tested from grid_size * block_size * keys_per_thread * iterations"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Fix EVM kernel correctness",
+      "steps": [
+        "Replace placeholder pubkey generation with real secp256k1 multiply",
+        "Validate address derivation matches omnivanity-chains for EVM",
+        "Add CPU verification of any GPU hit",
+        "Add a small deterministic test with a known seed"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Multi-GPU scaling and robustness",
+      "steps": [
+        "Partition seed space per device",
+        "Add per-device timing and throttling if needed",
+        "Support device selection and exclusion",
+        "Graceful shutdown on match or max_attempts/max_time"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Extend pattern types and chains",
+      "steps": [
+        "GPU suffix and contains for EVM (or GPU prefilter + CPU verify)",
+        "Add ed25519/Solana kernel based on OpenCL reference",
+        "Benchmark and tune grid/block sizes per device"
+      ]
+    }
+  ],
+  "risks": [
+    "Correct secp256k1 on GPU is non-trivial and error-prone",
+    "GPU kernel bugs can yield false positives without CPU verification",
+    "Performance may be limited by PCIe transfers if output buffers are large",
+    "Multi-GPU scheduling must avoid overlapping key ranges"
+  ],
+  "open_questions": [
+    "Do we prioritize EVM only or also Solana in the first GPU milestone?",
+    "Should GPU mode be the default when CUDA is available or explicit opt-in?",
+    "Build strategy: ship precompiled PTX or compile with NVRTC at runtime?",
+    "What pattern types must be supported on GPU for MVP?"
+  ],
+  "done_criteria": [
+    "GPU path can find a known EVM prefix faster than CPU on a CUDA device",
+    "CPU path remains unchanged and still works without CUDA",
+    "CLI/GUI can list GPUs and run a GPU search with user-selected device(s)"
+  ]
+}

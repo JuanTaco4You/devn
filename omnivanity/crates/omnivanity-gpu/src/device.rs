@@ -26,6 +26,8 @@ pub enum GpuBackend {
     OpenCL,
     Vulkan,
     Metal,
+    Dx12,
+    Wgpu,
 }
 
 impl std::fmt::Display for GpuBackend {
@@ -35,6 +37,8 @@ impl std::fmt::Display for GpuBackend {
             GpuBackend::OpenCL => write!(f, "OpenCL"),
             GpuBackend::Vulkan => write!(f, "Vulkan"),
             GpuBackend::Metal => write!(f, "Metal"),
+            GpuBackend::Dx12 => write!(f, "DirectX 12"),
+            GpuBackend::Wgpu => write!(f, "wgpu"),
         }
     }
 }
