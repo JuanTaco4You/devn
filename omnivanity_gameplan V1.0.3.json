@@ -1,0 +1,1127 @@
+{
+  "meta": {
+    "title": "OmniVanity: Multi-Chain Vanity Wallet Generator (GUI + CLI) — Build Game Plan",
+    "version": "0.1.2-draft",
+    "generated_at": "2026-01-15",
+    "timezone": "America/New_York",
+    "audience": [
+      "engineering team",
+      "AI coding agents",
+      "technical project managers"
+    ],
+    "primary_goal": "Ship a GPU-first, premium-feel Windows application (plus CLI) that can generate vanity addresses across major chains, starting with ETH/EVM + BTC/LTC, and scaling to 100+ coins via a coin-definition plugin system."
+  },
+  "input_from_user": {
+    "confirmed": {
+      "target_users": [
+        "normies",
+        "cli_users"
+      ],
+      "ux_priority": "Ultra-modern GUI; advanced controls hidden by default; professional EXE/installer quality.",
+      "performance_priority": "GPU-first, with automatic CPU fallback or CPU+GPU only when it measurably increases throughput.",
+      "observability": "In-GUI performance stats: addr/s, key/s, MH/s-equivalent where applicable; difficulty + ETA/probability."
+    },
+    "not_yet_confirmed": [
+      "Windows-only vs cross-platform scope",
+      "GPU vendor targets (NVIDIA CUDA vs OpenCL vs wgpu/DirectX/Vulkan)",
+      "Offline-only requirement",
+      "Licensing posture (open-source vs closed-source)",
+      "Exact address types to support per chain (BTC: legacy/P2SH/bech32/taproot; LTC: legacy/bech32; EVM: checksum rules)"
+    ]
+  },
+  "assumptions_to_unblock_execution": [
+    {
+      "assumption": "Windows is the primary target for v1; Linux builds are optional in later phases.",
+      "reason": "User requested EXE + Windows installer focus."
+    },
+    {
+      "assumption": "No network calls are required for core vanity generation; coin lists ship as files and can be updated via importing 'coin packs'.",
+      "reason": "Avoid reliance on external APIs, improve determinism and security posture."
+    },
+    {
+      "assumption": "Licensing risk is handled by re-implementing functionality from scratch (feature parity), not copying GPL/AGPL code into the new codebase.",
+      "reason": "Key upstream engines (VanitySearch GPL-3.0; vanitygen-plusplus AGPL-3.0) can contaminate distribution if directly embedded."
+    },
+    {
+      "assumption": "GPU backend strategy will be layered: (1) wgpu compute for broad coverage, (2) optional CUDA backend for NVIDIA performance, (3) optional OpenCL backend where practical.",
+      "reason": "User wants GPU-first *and* broad device coverage for normies."
+    },
+    {
+      "assumption": "First deliverable is a proof-of-concept that looks like a finished product and supports ETH/EVM + BTC + LTC with high-fidelity stats and exports.",
+      "reason": "User explicitly called it a proof-of-concept demonstrating agent thoroughness."
+    }
+  ],
+  "repo_feature_inventory": [
+    {
+      "repo": "https://github.com/JeanLucPons/VanitySearch",
+      "license": "GPL-3.0",
+      "scope": "Bitcoin address prefix finder (GPU + CPU)",
+      "must_extract_features": [
+        "GPU-first design with CPU assist and multi-GPU support",
+        "CUDA optimizations (inline PTX), tunable GPU grid size",
+        "High-performance secp256k1 arithmetic: fixed-size math, fast modular inversion, fast modular multiplication",
+        "Uses elliptic curve properties to generate more keys per iteration",
+        "CPU-optimized hashing (SSE SHA256 + RIPEMD160)",
+        "Supports P2PKH, P2SH, and Bech32 address types",
+        "BIP38-style passphrase-derived base key (-s) and passphrase+secure seed (-ps), pbkdf2_hmac_sha512",
+        "Split-key vanity address support",
+        "Operational considerations: keep one CPU core for GPU/CPU exchange to maximize throughput"
+      ],
+      "notes": [
+        "Use as a feature reference only; do not copy GPL code into proprietary distribution."
+      ],
+      "links": {
+        "repo_url": "https://github.com/JeanLucPons/VanitySearch",
+        "readme_url": "https://github.com/JeanLucPons/VanitySearch#readme",
+        "license_url": "https://github.com/JeanLucPons/VanitySearch/blob/master/LICENSE",
+        "license_name": "GPL-3.0",
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": []
+      },
+      "expected_behavior_source": "https://github.com/JeanLucPons/VanitySearch#readme",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/10gic/vanitygen-plusplus",
+      "license": "AGPL-3.0",
+      "scope": "Vanity generator supporting 100+ cryptocurrencies (CPU + OpenCL variants)",
+      "must_extract_features": [
+        "Supports 100+ cryptocurrencies with coin selection (e.g., -C LIST / -C ETH)",
+        "Displays difficulty, throughput (Mkey/s), total keys tested, probability, and 50% ETA",
+        "BTC support includes legacy and modern formats: p2wpkh (bech32) and p2tr (taproot)",
+        "ETH vanity wallet generation and vanity contract address generation (format flag for contract)",
+        "OpenCL GPU acceleration via oclvanitygen++",
+        "Includes key conversion utility (keyconv) and supports split-key generation workflow (-P pubkey) with PrivkeyPart recombination",
+        "Includes 'Solving Bitcoin Puzzles' modes (range/bit-limited search) using parameters like -Z base key and -l bit length",
+        "Multiple executables (vanitygen++, oclvanitygen++, keyconv, oclvanityminer)",
+        "Build supports standard make + 'make all' for GPU binaries and a nix-build pathway"
+      ],
+      "notes": [
+        "AGPL is incompatible with many closed-source distribution plans; treat as a feature + test vector source."
+      ],
+      "links": {
+        "repo_url": "https://github.com/10gic/vanitygen-plusplus",
+        "readme_url": "https://github.com/10gic/vanitygen-plusplus#readme",
+        "license_url": "https://github.com/10gic/vanitygen-plusplus/blob/master/LICENSE",
+        "license_name": "AGPL-3.0",
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Upstream README documents puzzle-mode (-Z/-l) and split-key workflow with keyconv (-P / PrivkeyPart recombination)."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/10gic/vanitygen-plusplus#readme",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/oritwoen/vgen",
+      "license": "MIT",
+      "scope": "Bitcoin + Ethereum vanity generator with regex + GPU (wgpu) + TUI",
+      "must_extract_features": [
+        "Regex pattern matching (not only prefixes)",
+        "Multiple address formats: BTC P2PKH and P2WPKH; Ethereum 0x",
+        "GPU acceleration via wgpu (Vulkan/Metal/DX12/OpenGL backends)",
+        "Parallel CPU scanning (rayon)",
+        "Interactive TUI with real-time statistics",
+        "Range scanning for Bitcoin puzzle challenges",
+        "Data-provider hooks for puzzle/bounty integration",
+        "JSON output mode and minimal output mode"
+      ],
+      "notes": [
+        "wgpu approach is useful for cross-vendor GPU-first defaults on Windows."
+      ],
+      "links": {
+        "repo_url": "https://github.com/oritwoen/vgen",
+        "readme_url": "https://github.com/oritwoen/vgen#readme",
+        "license_url": "https://github.com/oritwoen/vgen/blob/main/LICENSE",
+        "license_name": "MIT",
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "README indicates GPU is enabled by default and can be disabled via --no-gpu; supports regex patterns and multiple formats."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/oritwoen/vgen#readme",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/MyEtherWallet/VanityEth",
+      "license": "MIT",
+      "scope": "Ethereum vanity address generator (Node.js)",
+      "must_extract_features": [
+        "Generate multiple addresses per run",
+        "Multi-core support",
+        "Vanity contract address support",
+        "Log-to-file",
+        "Checksum-based vanity (EIP-55 style matching)"
+      ],
+      "notes": [
+        "Repo is archived; still a good feature reference and test vector generator."
+      ],
+      "links": {
+        "repo_url": "https://github.com/MyEtherWallet/VanityEth",
+        "readme_url": "https://github.com/MyEtherWallet/VanityEth/blob/master/README.md",
+        "license_url": "https://github.com/MyEtherWallet/VanityEth/blob/master/LICENSE",
+        "license_name": "MIT",
+        "status": "archived (Dec 10, 2025)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Archived upstream; treat as reference + test vectors, not a dependency."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/MyEtherWallet/VanityEth/blob/master/README.md",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/1inch/profanity2",
+      "license": "See repository",
+      "scope": "Ethereum vanity generator (split-key/offset-style safer design)",
+      "must_extract_features": [
+        "Does not require generating a final private key in the generator process; uses seed key + offset approach",
+        "GPU acceleration focus",
+        "Security posture motivated by historical randomness vulnerability in older profanity"
+      ],
+      "notes": [
+        "This is valuable for 'safe mode' options for normies and enterprise demos."
+      ],
+      "links": {
+        "repo_url": "https://github.com/1inch/profanity2",
+        "readme_url": "https://github.com/1inch/profanity2/blob/master/README.md",
+        "license_url": "https://github.com/1inch/profanity2/blob/master/LICENSE",
+        "license_name": null,
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Safe-by-design: does not generate a final key; adjusts user-provided public key; final privkey = seed_priv + offset."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/1inch/profanity2/blob/master/README.md",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/barrystyle/vanitygen-litecoin",
+      "license": "Unknown/See repo",
+      "scope": "Litecoin vanity generator (legacy C fork)",
+      "must_extract_features": [
+        "Exact-prefix matching and regex matching behavior (PCRE-style)",
+        "Difficulty estimate and 'prefix feasibility' validation concepts from vanitygen lineage",
+        "Case-insensitive option patterns (where supported) as reference"
+      ],
+      "notes": [
+        "Reference only; use for test vectors and behavioral parity checks."
+      ],
+      "links": {
+        "repo_url": "https://github.com/barrystyle/vanitygen-litecoin",
+        "readme_url": "https://github.com/barrystyle/vanitygen-litecoin#readme",
+        "license_url": "https://github.com/barrystyle/vanitygen-litecoin/blob/master/COPYING",
+        "license_name": null,
+        "status": "active (low activity)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Legacy C vanitygen variant; useful as reference and for test vectors."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/barrystyle/vanitygen-litecoin#readme",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/meehow/ethereum-vanity-wallet",
+      "license": "Unknown/See repo",
+      "scope": "Ethereum vanity generator (Go)",
+      "must_extract_features": [
+        "Prefix/suffix matching with hex constraints (A-F, 0-9) — useful for validating pattern rules",
+        "Simple CPU-only scan loop to cross-check correctness vs Rust/C++ core"
+      ],
+      "notes": [
+        "Reference only; not a core dependency."
+      ],
+      "links": {
+        "repo_url": "https://github.com/meehow/ethereum-vanity-wallet",
+        "readme_url": "https://github.com/meehow/ethereum-vanity-wallet#readme",
+        "license_url": "https://github.com/meehow/ethereum-vanity-wallet/blob/master/LICENSE",
+        "license_name": null,
+        "status": "active (low activity)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Go implementation; useful as reference and for cross-checking address derivation."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/meehow/ethereum-vanity-wallet#readme",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/samr7/vanitygen",
+      "license": "Unknown/See repo",
+      "scope": "Legacy vanitygen reference (C)",
+      "must_extract_features": [
+        "Prefix feasibility/difficulty estimation logic as reference",
+        "Exact-prefix vs regex modes and performance expectations",
+        "Keyconv-style utility patterns (address version overrides) as reference"
+      ],
+      "notes": [
+        "Reference only; do not embed unless licensing posture is intentionally copyleft."
+      ],
+      "links": {
+        "repo_url": "https://github.com/samr7/vanitygen",
+        "readme_url": "https://github.com/samr7/vanitygen#readme",
+        "license_url": "https://github.com/samr7/vanitygen/blob/master/COPYING",
+        "license_name": null,
+        "status": "active (legacy)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Canonical 'vanitygen' reference; useful for historical behavior and prefix feasibility/difficulty logic."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/samr7/vanitygen#readme",
+      "expected_behavior_as_of": "2026-01-14"
+    },
+    {
+      "repo": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019",
+      "license": "Unknown/See repo",
+      "scope": "Windows/VS2019 port of vanitygen++ (packaging reference)",
+      "must_extract_features": [
+        "Windows build layout, dependency notes, and CUDA/OpenCL SDK integration patterns (as documented by port)",
+        "Installer/runtime packaging lessons learned"
+      ],
+      "notes": [
+        "Packaging reference; upstream behavior remains defined by 10gic/vanitygen-plusplus."
+      ],
+      "links": {
+        "repo_url": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019",
+        "readme_url": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019#readme",
+        "license_url": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019/blob/main/LICENSE",
+        "license_name": null,
+        "status": "active (port)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Windows/VS2019 port reference for installer/runtime planning; do not treat as authoritative upstream."
+        ]
+      },
+      "expected_behavior_source": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019#readme",
+      "expected_behavior_as_of": "2026-01-14"
+    }
+  ],
+  "unified_feature_set": {
+    "interfaces": {
+      "gui": {
+        "mode": [
+          "Simple (default)",
+          "Advanced (hidden)"
+        ],
+        "required": [
+          "One-click 'Start' with sane defaults (GPU-first auto), minimal jargon",
+          "Chain selector with search, favorites, and presets",
+          "Pattern builder: prefix/suffix/contains/regex (regex behind Advanced)",
+          "Address type selector per chain (BTC: legacy/P2SH/bech32/taproot; EVM: checksum mode toggle)",
+          "Real-time stats: keys/s, addresses/s, difficulty, probability to hit by time horizon, 50% ETA",
+          "Device panel (Advanced): GPU list, backend (wgpu/CUDA/OpenCL), per-device enable/disable, auto-tune",
+          "Export panel: copy buttons + file export + optional encrypted export",
+          "Safety UX: clear warnings for 'too-hard' patterns, estimated time, and secure key handling tips"
+        ],
+        "nice_to_have": [
+          "Integrated TUI-like live console for power users",
+          "Dark/light themes; animations; responsive layout",
+          "QR generation for address, optional for private key only when explicitly enabled"
+        ]
+      },
+      "cli": {
+        "required": [
+          "Headless generation with identical core engine as GUI",
+          "Machine-readable JSON output + minimal human output",
+          "Batch mode: pattern lists file, multiple chains, multiple formats",
+          "Deterministic 'benchmark' command to pick fastest backend",
+          "Exit codes suitable for automation"
+        ]
+      }
+    },
+    "core_capabilities": {
+      "multi_chain_support": [
+        "EVM family (ETH, BNB Chain, Polygon, Arbitrum, Optimism, Base, etc.) — address derivation identical; chain ID is metadata",
+        "UTXO/secp256k1 family (BTC, LTC, DOGE-like variants) — param-driven version bytes and bech32 HRPs",
+        "Ed25519 family (Solana, Stellar, etc.) — future extension (already present in upstream feature sets)"
+      ],
+      "pattern_matching": [
+        "prefix, suffix, contains (substring)",
+        "regex (PCRE2 recommended; Advanced)",
+        "case-insensitive option where valid",
+        "checksum-aware matching for EVM (EIP-55), with modes: lowercase-only, checksum-exact"
+      ],
+      "generation_modes": [
+        "random key search (default)",
+        "split-key / partial-key generation (advanced security mode) for supported chains",
+        "range scan / constrained scan modes (puzzle mode) for BTC-like chains (Advanced)"
+      ],
+      "performance": [
+        "GPU-first auto selection",
+        "CPU-only fallback if GPU not available",
+        "CPU+GPU hybrid only if benchmark proves speedup (auto decision)",
+        "multi-GPU support, per-device tuning (grid/workgroup sizes)"
+      ],
+      "outputs": [
+        "Address",
+        "Private key (chain-appropriate format: hex/WIF)",
+        "Extended formats (where applicable): compressed/uncompressed pubkey, WIF compressed flag, etc.",
+        "JSON export schema stable across chains",
+        "Log-to-file and session history"
+      ]
+    }
+  },
+  "architecture": {
+    "recommended_stack": {
+      "core_engine": {
+        "language": "Rust (preferred) or C++",
+        "reason": [
+          "Deterministic high-performance core shared by GUI and CLI",
+          "Safer memory handling for key material with Rust",
+          "Excellent FFI surface to both Tauri (Rust) and Python (if needed)"
+        ],
+        "modules": [
+          "engine-core (scheduler, stats, cancellation, benchmarking)",
+          "crypto-primitives (secp256k1, ed25519, keccak, sha256, ripemd160, bech32/base58, pbkdf2)",
+          "chain-adapters (EVM, BTC-like, etc.)",
+          "pattern-engine (prefix/suffix/contains/regex + checksum policies)",
+          "gpu-backends (wgpu first; optional cuda; optional opencl)",
+          "exports (json, csv, text, encrypted vault)",
+          "cli (thin wrapper over engine-core)",
+          "ffi (optional: python bindings / C ABI)"
+        ]
+      },
+      "gui": {
+        "option_a": {
+          "tech": "Tauri + React (or Svelte) + Rust core",
+          "pros": [
+            "Premium feel",
+            "Small installer",
+            "Great Windows UX",
+            "Shares Rust core directly"
+          ],
+          "cons": [
+            "Web UI stack adds frontend complexity"
+          ]
+        },
+        "option_b": {
+          "tech": "PySide6/QML frontend + Rust core via FFI",
+          "pros": [
+            "Closer to user’s existing Python GUI workflow",
+            "Fast iteration"
+          ],
+          "cons": [
+            "Packaging heavier; harder to feel 'native-premium' without extra work"
+          ]
+        },
+        "recommendation": "Option A (Tauri) for 'looks like a product team shipped it'."
+      }
+    },
+    "gpu_backend_strategy": {
+      "tier_1_default": {
+        "backend": "wgpu compute",
+        "why": "Cross-vendor GPU support and simpler 'normie' install story; aligns with vgen feature set."
+      },
+      "tier_2_optional": {
+        "backend": "CUDA",
+        "why": "Best-in-class secp256k1 throughput on NVIDIA; aligns with VanitySearch design goals."
+      },
+      "tier_3_optional": {
+        "backend": "OpenCL",
+        "why": "Compatibility with AMD/older stacks; aligns with vanitygen-plusplus OpenCL variants."
+      },
+      "auto_tuning": [
+        "First-run benchmark: small sample runs per backend/device to choose default",
+        "Per-chain kernel specialization (EVM keccak vs BTC pipeline)"
+      ]
+    },
+    "coin_support_strategy": {
+      "coin_packs": {
+        "format": "JSON definition files shipped with the app",
+        "content": [
+          "ticker, name, family (EVM/UTXO/ED25519/etc.)",
+          "address formats supported and their parameters (version bytes, HRPs, checksums)",
+          "key derivation parameters (curve, hashing pipeline)",
+          "default export format rules"
+        ],
+        "update_mechanism": [
+          "Import/export coin packs from file (offline)",
+          "Optional signed coin-pack updates later"
+        ],
+        "starting_source": "Use vanitygen-plusplus coin coverage as a completeness reference (feature parity), re-implemented in our own coin-pack schema."
+      }
+    },
+    "dependency_policy": {
+      "rule": "For any third-party dependency (even permissive), pin version/commit and vendor minimal surface area.",
+      "pinning": {
+        "preferred": [
+          "git submodule pinned to commit",
+          "Cargo.lock/Go modules with versions",
+          "vendored tarball with hash"
+        ],
+        "avoid": [
+          "floating 'master' dependencies in production builds"
+        ]
+      }
+    }
+  },
+  "phases": [
+    {
+      "phase_id": "P0",
+      "name": "Requirements Lock + Feature Parity Inventory",
+      "objective": "Freeze v1 scope, build a zero-miss feature inventory from upstream repos, and define acceptance criteria that match the 'premium product' requirement.",
+      "deliverables": [
+        "Feature matrix (repo -> features -> implementation notes)",
+        "Coin family taxonomy + coin-pack schema draft",
+        "UX wireflows for Simple vs Advanced, and CLI command map",
+        "Security posture doc (key handling, RNG, export encryption, safe-mode split-key)",
+        "Build/packaging decision (Tauri vs PySide6) and repo scaffolding plan"
+      ],
+      "tasks": [
+        "Extract feature list from VanitySearch (CUDA/multi-GPU, BIP38 passphrase modes, address types, split-key, tuning)",
+        "Extract feature list from vanitygen-plusplus (100+ coins, OpenCL binaries, keyconv, split-key workflow, puzzle modes, contract vanity, stats formatting)",
+        "Extract feature list from vgen (regex, wgpu, CPU rayon, TUI stats, JSON/min output, puzzle integration hooks)",
+        "Extract feature list from VanityEth (multi-core, contract vanity, checksum vanity, file logging)",
+        "Unify into one requirements doc with MUST/SHOULD/COULD priorities",
+        "Define v1 supported chains: EVM (ETH/BNB/etc.) + BTC + LTC",
+        "Define v1 address types: BTC legacy + bech32 + taproot; LTC legacy + bech32; EVM checksum modes"
+      ],
+      "acceptance_criteria": [
+        "No 'unknowns' remain for v1 scope; any remaining decisions are explicitly marked and owned.",
+        "A junior dev can implement from the spec without asking what flags or modes mean."
+      ],
+      "risks": [
+        "Licensing: directly embedding GPL/AGPL code forces open-sourcing; mitigate via clean-room reimplementation.",
+        "GPU scope creep: too many backends at once; mitigate by wgpu-first, then CUDA as performance upgrade."
+      ]
+    },
+    {
+      "phase_id": "P1",
+      "name": "Core Engine MVP (CPU) + CLI First",
+      "objective": "Stand up the new codebase with a CPU-only engine that supports ETH/EVM vanity and emits stable JSON outputs and stats.",
+      "deliverables": [
+        "engine-core with cancellation, rate stats, checkpointing stubs",
+        "pattern-engine: prefix/suffix/contains + optional regex (flagged off by default)",
+        "EVM chain adapter: key -> pubkey -> keccak -> address; checksum mode support",
+        "CLI: `generate`, `benchmark`, `list-chains`, `validate-pattern`, `export-schema`",
+        "JSON output schema v1 + golden test vectors"
+      ],
+      "tasks": [
+        "Implement secure RNG (OS RNG) and key material zeroization",
+        "Implement keccak-256 and EIP-55 checksum formatting",
+        "Implement multi-thread CPU scan with work-stealing",
+        "Implement live stats + difficulty/probability estimator matching vanitygen++ style outputs",
+        "Implement file logging (session logs + results log)"
+      ],
+      "acceptance_criteria": [
+        "CLI generates ETH vanity addresses with prefix match at correct probability and correct checksum formatting.",
+        "Throughput scales with CPU cores; stats are stable and accurate within +/-5% on a 10s sample.",
+        "JSON output is parseable and consistent across runs."
+      ]
+    },
+    {
+      "phase_id": "P2",
+      "name": "GPU Acceleration for EVM (wgpu first) + Auto Benchmarking",
+      "objective": "Make GPU the default engine path for EVM vanity (fast win), with automated backend selection and CPU fallback.",
+      "deliverables": [
+        "wgpu compute kernel for EVM pipeline (batch keccak + address compare)",
+        "Scheduler that can run GPU-only or GPU+CPU (only if benchmark says faster)",
+        "Device enumeration + auto-tune of batch sizes/workgroups",
+        "In-engine benchmark harness producing a 'best backend' profile per chain"
+      ],
+      "tasks": [
+        "Design GPU kernel API: input seeds -> derived candidate privkeys -> compute addresses -> match mask",
+        "Implement CPU-side prefiltering vs GPU-only path decision",
+        "Implement cancellation, progress, and match extraction without stalling GPU",
+        "Add CLI: `benchmark --chain EVM` and export benchmark JSON"
+      ],
+      "acceptance_criteria": [
+        "On a midrange GPU, EVM vanity throughput exceeds CPU-only by a clear margin.",
+        "If GPU is unavailable, engine seamlessly falls back to CPU with identical outputs.",
+        "Hybrid mode is only enabled when it measurably increases throughput."
+      ],
+      "risks": [
+        "GPU driver variability; mitigate with wgpu feature probing and robust fallbacks."
+      ]
+    },
+    {
+      "phase_id": "P3",
+      "name": "BTC/LTC CPU Support (UTXO family) + Address Types",
+      "objective": "Add BTC and LTC vanity generation on CPU with correct address formatting and export formats.",
+      "deliverables": [
+        "secp256k1 key derivation + pubkey serialization",
+        "BTC hashing pipeline: SHA256 + RIPEMD160 + Base58Check and bech32/bech32m as needed",
+        "Address type support: legacy (P2PKH), P2SH (optional), bech32 (P2WPKH), taproot (P2TR)",
+        "LTC parameters: version bytes + HRPs; legacy + bech32",
+        "Export formats: BTC/LTC WIF + hex; compressed/uncompressed where applicable"
+      ],
+      "tasks": [
+        "Implement base58check + bech32 encoding",
+        "Implement taproot address encoding (bech32m) for BTC",
+        "Implement pattern matching on encoded address string + optional raw-byte matching for speed",
+        "Add split-key workflow scaffolding (CPU version) for BTC-like chains"
+      ],
+      "acceptance_criteria": [
+        "Generated BTC/LTC addresses validate against known libraries and match expected format rules.",
+        "Exported WIF keys import successfully in reference wallets (team should test with offline tools)."
+      ]
+    },
+    {
+      "phase_id": "P4",
+      "name": "GPU Acceleration for secp256k1 (BTC/LTC) — CUDA then optional OpenCL",
+      "objective": "Bring BTC/LTC into the GPU-first world with a real throughput jump, borrowing optimization concepts from VanitySearch.",
+      "deliverables": [
+        "CUDA backend for secp256k1 scalar multiplication optimized for vanity searching",
+        "Multi-GPU support with per-device grid auto-tune",
+        "CPU assist pipeline tuned for GPU throughput (keep one core for dispatch/IO)",
+        "Optional OpenCL backend (if team capacity allows)"
+      ],
+      "tasks": [
+        "Kernel design: batch scalar multiply -> pubkey -> hash -> encode/prefix compare (optimize compare before full encode where possible)",
+        "Implement modular arithmetic optimizations analogous to VanitySearch feature set (fast inversion/mul, fixed-size math)",
+        "Implement grid/workgroup auto-tuning and persistence per device",
+        "Implement safe passphrase-seeded generation mode (BIP38-like) as an option"
+      ],
+      "acceptance_criteria": [
+        "GPU BTC/LTC throughput materially outperforms CPU baseline on supported NVIDIA GPUs.",
+        "Multi-GPU scaling is near-linear for 2 GPUs on the same host (within expected PCIe limits)."
+      ],
+      "risks": [
+        "CUDA-only may exclude AMD users; mitigate with wgpu/OpenCL roadmap and clear device messaging."
+      ]
+    },
+    {
+      "phase_id": "P5",
+      "name": "Split-Key / Safe-Mode + Puzzle/Range Modes (Advanced)",
+      "objective": "Implement advanced modes seen in upstream: split-key vanity generation, puzzle/range scanning, and secure UX.",
+      "deliverables": [
+        "Split-key generation for BTC-like and EVM (offset/seed style where possible)",
+        "Range scan / constrained scan modes for BTC-like chains",
+        "Import/export of partial key material, with strong validation and guardrails",
+        "Advanced UI toggles + documentation"
+      ],
+      "tasks": [
+        "Implement split-key flows analogous to vanitygen++ (-P) and VanitySearch split-key concept",
+        "Implement EVM safe-mode akin to profanity2 approach (seed+offset)",
+        "Implement puzzle mode parameters (range start/end, stride, bit-length) and ensure it is opt-in and clearly labeled"
+      ],
+      "acceptance_criteria": [
+        "Split-key workflow can be completed end-to-end without exposing the final private key to the 'worker' machine.",
+        "Puzzle/range mode produces deterministic search behavior given the same inputs."
+      ]
+    },
+    {
+      "phase_id": "P6",
+      "name": "Ultra-Modern GUI + Product Polish",
+      "objective": "Deliver the premium look: polished GUI, onboarding, safe defaults, and pro-grade export UX.",
+      "deliverables": [
+        "Tauri desktop app (recommended) with signed installer",
+        "Simple mode flow: chain -> pattern -> start -> result",
+        "Advanced settings drawer for devices, regex, split-key, export encryption",
+        "Session history + saved presets + favorites",
+        "Live charts/graphs optional (throughput over time)",
+        "Crash-safe logging and self-diagnostics bundle export"
+      ],
+      "acceptance_criteria": [
+        "A normie can generate a vanity address without seeing 'GPU backend' jargon.",
+        "A power user can reproduce the same run via CLI using a 'Copy CLI command' button.",
+        "UI performance stays smooth during long runs."
+      ]
+    },
+    {
+      "phase_id": "P7",
+      "name": "Scale to Top-100+ Coins via Coin Packs",
+      "objective": "Extend coverage without turning the engine into spaghetti: add coins by data + small adapters.",
+      "deliverables": [
+        "Coin-pack schema v1 finalized + pack compiler/validator tool",
+        "Built-in pack: EVM family + major UTXO variants + select ed25519 chains",
+        "Pack import/export and versioning",
+        "Automated conformance tests per coin definition"
+      ],
+      "tasks": [
+        "Map top-100 coins into families: EVM, UTXO-secp256k1, ed25519, others",
+        "Implement adapter hooks for non-standard address schemes",
+        "Add CI that runs conformance tests for all coin packs"
+      ],
+      "acceptance_criteria": [
+        "Adding a new EVM chain requires only metadata (name/ticker) — no code.",
+        "Adding a new UTXO coin requires only version/HRP parameters — no code.",
+        "Non-standard chains are isolated behind explicit adapters."
+      ]
+    },
+    {
+      "phase_id": "P8",
+      "name": "Packaging, Signing, Updates, and Release Process",
+      "objective": "Make it feel like a real product shipped by adults: reproducible builds, signing, and safe updates.",
+      "deliverables": [
+        "Windows installer (MSI or NSIS/Inno) with GPU runtime detection",
+        "Code signing plan (EV cert optional) and CI/CD release pipeline",
+        "Portable mode option",
+        "Optional auto-update channel (signed updates) for future"
+      ],
+      "acceptance_criteria": [
+        "Fresh Windows machine install works without manual dependency fiddling.",
+        "GPU detection is reliable and failure modes are clear and non-scary."
+      ]
+    }
+  ],
+  "cli_spec": {
+    "binary_name": "omnivanity",
+    "commands": [
+      {
+        "name": "generate",
+        "purpose": "Generate vanity addresses until a match is found or limits are reached.",
+        "flags": [
+          "--chain <ticker|family>",
+          "--pattern <string|regex>",
+          "--match <prefix|suffix|contains|regex>",
+          "--address-type <auto|p2pkh|p2wpkh|p2tr|evm>",
+          "--checksum <auto|off|eip55-exact|lowercase>",
+          "--backend <auto|cpu|wgpu|cuda|opencl>",
+          "--devices <auto|list|ids>",
+          "--threads <auto|N>",
+          "--time-limit <seconds>",
+          "--attempt-limit <N>",
+          "--output <json|min|text>",
+          "--log <path>",
+          "--export <path>",
+          "--encrypt-export <on|off> --export-pass <prompt|env:VAR>",
+          "--split-key <off|btc|evm>",
+          "--range <start:end[:stride]> (advanced)",
+          "--benchmark-first <on|off>"
+        ]
+      },
+      {
+        "name": "benchmark",
+        "purpose": "Benchmark available backends/devices for a chain and store a profile.",
+        "flags": [
+          "--chain <...>",
+          "--duration <seconds>",
+          "--output <path>"
+        ]
+      },
+      {
+        "name": "list-chains",
+        "purpose": "List supported chains/coins from installed coin packs."
+      },
+      {
+        "name": "validate-pattern",
+        "purpose": "Validate pattern rules for a chain/address type."
+      },
+      {
+        "name": "coinpack",
+        "purpose": "Install/list/validate coin packs.",
+        "subcommands": [
+          "list",
+          "install",
+          "validate",
+          "export-template"
+        ]
+      }
+    ]
+  },
+  "export_schema_v1": {
+    "result_record": {
+      "chain": "string",
+      "address_type": "string",
+      "address": "string",
+      "private_key": {
+        "format": "hex|wif|other",
+        "value": "string"
+      },
+      "public_key": {
+        "format": "hex|compressed-hex|other",
+        "value": "string"
+      },
+      "derivation": {
+        "mode": "random|split-key|range",
+        "details": "object"
+      },
+      "stats": {
+        "keys_tested": "int",
+        "keys_per_sec": "float",
+        "addresses_per_sec": "float",
+        "difficulty": "float",
+        "probability_hit": "float",
+        "eta_50pct_seconds": "float",
+        "backend": "string",
+        "device": "string"
+      },
+      "timestamp_utc": "string"
+    }
+  },
+  "testing_strategy": {
+    "unit_tests": [
+      "Encoding/decoding: base58check, bech32/bech32m, EIP-55 checksum",
+      "Crypto primitives: keccak, sha256, ripemd160, pbkdf2",
+      "Pattern engine correctness: prefix/suffix/contains/regex, case rules"
+    ],
+    "property_tests": [
+      "Address roundtrip invariants where applicable",
+      "Distribution sanity checks: hit-rate approximates expected probability over large samples"
+    ],
+    "gpu_tests": [
+      "Kernel correctness vs CPU reference for small batches",
+      "Deterministic match extraction and cancellation behavior",
+      "Cross-device regression suite (NVIDIA + AMD where available)"
+    ],
+    "golden_vectors": [
+      "Known private keys producing known addresses for BTC/EVM",
+      "Known checksum cases for EVM vanity patterns"
+    ]
+  },
+  "security_model": {
+    "key_handling": [
+      "Use OS CSPRNG; never roll your own RNG",
+      "Zeroize key material in memory where feasible",
+      "Avoid writing private keys to disk unless user explicitly exports",
+      "Encrypted export option (password-derived key, modern KDF)"
+    ],
+    "safe_mode": [
+      "Offer split-key / seed+offset modes for demos and paranoid users",
+      "Clearly mark advanced modes; default to simplest safe path"
+    ]
+  },
+  "work_breakdown_for_ai_agents": {
+    "how_to_run_phases_with_agents": [
+      "Assign one agent per phase; lock acceptance criteria before coding.",
+      "Require agents to output: (1) code changes, (2) tests, (3) short 'how to run' notes, (4) benchmark numbers.",
+      "Gate merges on test pass + deterministic output schema conformance."
+    ],
+    "agent_prompt_template": {
+      "title": "Phase {PHASE_ID}: {PHASE_NAME}",
+      "prompt_body": [
+        "Implement ONLY the deliverables listed for this phase.",
+        "Do not change the JSON export schema unless explicitly instructed.",
+        "Add tests for every new module; include golden vectors.",
+        "Provide a short benchmark run output and how to reproduce it.",
+        "List risks/unknowns discovered and propose mitigations without scope creep."
+      ]
+    }
+  },
+  "sources": {
+    "repos": {
+      "VanitySearch": {
+        "repo_url": "https://github.com/JeanLucPons/VanitySearch",
+        "readme_url": "https://github.com/JeanLucPons/VanitySearch#readme",
+        "license_url": "https://github.com/JeanLucPons/VanitySearch/blob/master/LICENSE",
+        "license_name": "GPL-3.0",
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": []
+      },
+      "vanitygen-plusplus": {
+        "repo_url": "https://github.com/10gic/vanitygen-plusplus",
+        "readme_url": "https://github.com/10gic/vanitygen-plusplus#readme",
+        "license_url": "https://github.com/10gic/vanitygen-plusplus/blob/master/LICENSE",
+        "license_name": "AGPL-3.0",
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Upstream README documents puzzle-mode (-Z/-l) and split-key workflow with keyconv (-P / PrivkeyPart recombination)."
+        ]
+      },
+      "vgen": {
+        "repo_url": "https://github.com/oritwoen/vgen",
+        "readme_url": "https://github.com/oritwoen/vgen#readme",
+        "license_url": "https://github.com/oritwoen/vgen/blob/main/LICENSE",
+        "license_name": "MIT",
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "README indicates GPU is enabled by default and can be disabled via --no-gpu; supports regex patterns and multiple formats."
+        ]
+      },
+      "VanityEth": {
+        "repo_url": "https://github.com/MyEtherWallet/VanityEth",
+        "readme_url": "https://github.com/MyEtherWallet/VanityEth/blob/master/README.md",
+        "license_url": "https://github.com/MyEtherWallet/VanityEth/blob/master/LICENSE",
+        "license_name": "MIT",
+        "status": "archived (Dec 10, 2025)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Archived upstream; treat as reference + test vectors, not a dependency."
+        ]
+      },
+      "profanity2": {
+        "repo_url": "https://github.com/1inch/profanity2",
+        "readme_url": "https://github.com/1inch/profanity2/blob/master/README.md",
+        "license_url": "https://github.com/1inch/profanity2/blob/master/LICENSE",
+        "license_name": null,
+        "status": "active",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Safe-by-design: does not generate a final key; adjusts user-provided public key; final privkey = seed_priv + offset."
+        ]
+      },
+      "vanitygen-litecoin": {
+        "repo_url": "https://github.com/barrystyle/vanitygen-litecoin",
+        "readme_url": "https://github.com/barrystyle/vanitygen-litecoin#readme",
+        "license_url": "https://github.com/barrystyle/vanitygen-litecoin/blob/master/COPYING",
+        "license_name": null,
+        "status": "active (low activity)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Legacy C vanitygen variant; useful as reference and for test vectors."
+        ]
+      },
+      "ethereum-vanity-wallet": {
+        "repo_url": "https://github.com/meehow/ethereum-vanity-wallet",
+        "readme_url": "https://github.com/meehow/ethereum-vanity-wallet#readme",
+        "license_url": "https://github.com/meehow/ethereum-vanity-wallet/blob/master/LICENSE",
+        "license_name": null,
+        "status": "active (low activity)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Go implementation; useful as reference and for cross-checking address derivation."
+        ]
+      },
+      "vanitygen": {
+        "repo_url": "https://github.com/samr7/vanitygen",
+        "readme_url": "https://github.com/samr7/vanitygen#readme",
+        "license_url": "https://github.com/samr7/vanitygen/blob/master/COPYING",
+        "license_name": null,
+        "status": "active (legacy)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Canonical 'vanitygen' reference; useful for historical behavior and prefix feasibility/difficulty logic."
+        ]
+      },
+      "vanitygen-plusplus-windows-port": {
+        "repo_url": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019",
+        "readme_url": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019#readme",
+        "license_url": "https://github.com/AngelTs/vanitygen-plusplus-ported-for-VS2019/blob/main/LICENSE",
+        "license_name": null,
+        "status": "active (port)",
+        "last_checked": "2026-01-14",
+        "notes": [
+          "Windows/VS2019 port reference for installer/runtime planning; do not treat as authoritative upstream."
+        ]
+      }
+    },
+    "verification_policy": {
+      "as_of": "2026-01-14",
+      "principle": "Repo READMEs are treated as the source of truth for 'expected behavior' as-of the verification date.",
+      "implementation_guidance": [
+        "When using any upstream code as a build dependency, pin to a specific commit SHA or release tag.",
+        "For GPL/AGPL repos, treat as reference/test vectors; implement clean-room to avoid copyleft contagion unless the whole project is intentionally open-sourced."
+      ]
+    }
+  },
+  "zip_source_gap_analysis": {
+    "analysis_goal": "Identify feature gaps between the current game plan and the bundled zip sources, and record concrete additions needed for parity or security coverage.",
+    "sources_checked": [
+      {
+        "zip": "VanitySearch-master.zip",
+        "primary_doc": "VanitySearch-master/README.md"
+      },
+      {
+        "zip": "vanitygen-plusplus-master.zip",
+        "primary_doc": "vanitygen-plusplus-master/README.md"
+      },
+      {
+        "zip": "profanity-master.zip",
+        "primary_doc": "profanity-master/README.md"
+      },
+      {
+        "zip": "profanity2-master.zip",
+        "primary_doc": "profanity2-master/README.md"
+      },
+      {
+        "zip": "solVanityPlus.zip",
+        "primary_doc": "solVanityPlus-main/README.md"
+      },
+      {
+        "zip": "solVanityPlus.zip",
+        "primary_doc": "solVanityPlus-main/FAQs.md"
+      },
+      {
+        "zip": "vanity-btc-main.zip",
+        "primary_doc": "vanity-btc-main/README.md"
+      }
+    ],
+    "missing_features_by_source": [
+      {
+        "source_zip": "VanitySearch-master.zip",
+        "missing_features": [
+          {
+            "feature": "Wildcard prefix matching (\"?\" and \"*\") for prefix searches.",
+            "why_it_matters": "Allows flexible prefix searches similar to VanitySearch behavior.",
+            "how_to_add": "Extend the pattern engine with a lightweight wildcard matcher for prefix mode only; keep regex behind Advanced. Add CLI validation for wildcard-only patterns."
+          },
+          {
+            "feature": "Case-insensitive prefix matching toggle.",
+            "why_it_matters": "Parity with VanitySearch -c flag and user expectations from BTC tools.",
+            "how_to_add": "Add a case-insensitive flag to pattern engine; for base58/bech32, preserve case rules by chain/address type."
+          },
+          {
+            "feature": "Compressed vs uncompressed address search modes, plus “both” mode.",
+            "why_it_matters": "VanitySearch exposes -u and -b flags; users expect control over compressed/uncompressed key formats.",
+            "how_to_add": "Add address-type variants or a compression toggle in BTC/LTC adapters; expose in CLI and Advanced GUI."
+          },
+          {
+            "feature": "Batch prefix list search + stop when all prefixes are found.",
+            "why_it_matters": "VanitySearch supports -i inputfile and -stop to solve multiple patterns in one run.",
+            "how_to_add": "Add a batch pattern file input to CLI; implement stop condition once all patterns are satisfied; add GUI upload for pattern lists."
+          },
+          {
+            "feature": "Explicit output file for results.",
+            "why_it_matters": "VanitySearch supports -o outputfile for deterministic result storage.",
+            "how_to_add": "Add --results-file option in CLI and a “save results” control in GUI that writes JSON or text logs."
+          },
+          {
+            "feature": "Manual GPU grid/workgroup override and device listing.",
+            "why_it_matters": "VanitySearch exposes -g for grid size and -l to list devices for tuning.",
+            "how_to_add": "Expose GPU device listing in CLI/GUI and allow an Advanced override for batch size/workgroup dimensions with safety warnings."
+          },
+          {
+            "feature": "Kernel self-check comparing GPU vs CPU results.",
+            "why_it_matters": "VanitySearch -check validates GPU correctness; important for trust and support.",
+            "how_to_add": "Implement a self-test command that runs a small deterministic batch on CPU and GPU and compares outputs."
+          },
+          {
+            "feature": "Rekey interval control for long-running sessions.",
+            "why_it_matters": "VanitySearch -r allows rekeying for operational hygiene and performance stability.",
+            "how_to_add": "Add a scheduler option to rotate base keys at a configurable interval, with stats continuity handling."
+          },
+          {
+            "feature": "Key utility commands: compute public key from private key and generate keypairs.",
+            "why_it_matters": "VanitySearch includes -cp and -kp; helpful for split-key workflows and validation.",
+            "how_to_add": "Add CLI subcommands for key inspection and keypair generation with consistent export formats."
+          },
+          {
+            "feature": "CPU hashing compatibility toggle to disable SSE optimizations (-nosse).",
+            "why_it_matters": "VanitySearch exposes -nosse for older CPUs or debugging; useful for broader compatibility testing.",
+            "how_to_add": "Provide a runtime flag that forces the portable CPU hash path and note the performance impact in CLI/GUI help."
+          },
+          {
+            "feature": "Maximum results per kernel call tuning (-m maxFound).",
+            "why_it_matters": "Controls batching behavior for bulk pattern searches and can stabilize throughput on some GPUs.",
+            "how_to_add": "Expose an advanced knob that limits hits per kernel invocation; default to safe auto-tuned value."
+          }
+        ]
+      },
+      {
+        "source_zip": "vanitygen-plusplus-master.zip",
+        "missing_features": [
+          {
+            "feature": "EVM contract vanity address mode as a first-class option.",
+            "why_it_matters": "vanitygen++ supports -F contract; contract vanity is a common EVM use case.",
+            "how_to_add": "Add a “contract address” mode for EVM that hashes sender+nonce(0) and matches against the derived contract address."
+          },
+          {
+            "feature": "Key conversion utility (keyconv) parity.",
+            "why_it_matters": "vanitygen++ ships keyconv for pubkey generation and split-key recombination.",
+            "how_to_add": "Add CLI subcommands for key conversion and split-key recombination to mirror keyconv workflows."
+          }
+        ]
+      },
+      {
+        "source_zip": "profanity-master.zip",
+        "missing_features": [
+          {
+            "feature": "Explicit security warnings and UX guardrails against unsafe RNG-based generators.",
+            "why_it_matters": "The original profanity is explicitly insecure and archived; OmniVanity should clearly warn users and avoid similar pitfalls.",
+            "how_to_add": "Add a security notice in docs/UI explaining why old profanity is unsafe; ensure default RNG uses OS CSPRNG and block any deterministic/insecure modes unless explicitly marked “unsafe”."
+          }
+        ]
+      },
+      {
+        "source_zip": "profanity2-master.zip",
+        "missing_features": [
+          {
+            "feature": "Safe-mode requiring a seed public key and returning an offset private key (seed+offset design).",
+            "why_it_matters": "profanity2/3 safe-by-design workflow lets untrusted machines search without exposing final private keys.",
+            "how_to_add": "Implement an EVM safe-mode that takes a seed public key, searches for an offset, and provides a safe recombination utility."
+          },
+          {
+            "feature": "Hex-pattern scoring modes (zeros, letters, numbers, mirror, leading-doubles).",
+            "why_it_matters": "profanity3 provides non-prefix scoring modes that users may expect for EVM vanity generation.",
+            "how_to_add": "Add advanced scoring modes to pattern engine for EVM-only hex output; surface in Advanced UI and CLI flags."
+          },
+          {
+            "feature": "Range-based hex matching (leading-range and anywhere-range) with min/max controls.",
+            "why_it_matters": "Useful for probabilistic patterns and vanity constraints beyond fixed strings.",
+            "how_to_add": "Extend EVM matcher to support range constraints and validate min/max inputs in CLI."
+          },
+          {
+            "feature": "Benchmark-only mode and device/kernel controls (skip device, no-cache, work sizes).",
+            "why_it_matters": "Power users need device tuning and cache control when using OpenCL-based engines.",
+            "how_to_add": "Expose device skip, kernel cache toggle, and workgroup sizing controls in Advanced settings; add a quick benchmark mode that doesn’t search."
+          },
+          {
+            "feature": "Audit/crack mode for legacy profanity1 keys (risk assessment tool).",
+            "why_it_matters": "profanity3 includes a mode to assess compromised keys; useful for migration guidance.",
+            "how_to_add": "Add an “audit legacy vanity keys” tool that checks if a given public key is from a known-weak generator and recommends replacement."
+          }
+        ]
+      },
+      {
+        "source_zip": "solVanityPlus.zip",
+        "missing_features": [
+          {
+            "feature": "Solana (ed25519) vanity support with prefix/suffix matching.",
+            "why_it_matters": "solVanityPlus focuses on Solana; OmniVanity should track ed25519-family needs.",
+            "how_to_add": "Add an ed25519 chain adapter and a Solana address encoder; wire prefix/suffix matching with base58 rules."
+          },
+          {
+            "feature": "OpenCL GPU backend for ed25519 with multi-GPU support.",
+            "why_it_matters": "solVanityPlus demonstrates OpenCL acceleration and multi-GPU scaling for Solana.",
+            "how_to_add": "Plan an OpenCL backend for ed25519 similar to the secp256k1 pipeline; add device selection and multi-GPU scheduling."
+          },
+          {
+            "feature": "Device selection and iteration-bits tuning for GPU throughput.",
+            "why_it_matters": "solVanityPlus exposes device selection and an iteration-bits performance knob.",
+            "how_to_add": "Add Advanced tuning controls for ed25519 batch sizes (iteration bits) and explicit device selection."
+          },
+          {
+            "feature": "Case-sensitive toggle and multiple prefixes per run.",
+            "why_it_matters": "solVanityPlus allows multiple prefixes and case sensitivity control in Solana searches.",
+            "how_to_add": "Add per-chain case-sensitivity controls where it’s valid and allow multiple prefix inputs in batch mode."
+          },
+          {
+            "feature": "Multi-result output (count) and output directory selection.",
+            "why_it_matters": "Users often want multiple vanity keys and organized output.",
+            "how_to_add": "Add “count” and “output directory” options to CLI and export panel for batch result writing."
+          },
+          {
+            "feature": "Manager/orchestrator workflow (optional distributed execution).",
+            "why_it_matters": "solVanityPlus includes a manager and a GCP Pub/Sub example for coordinating workers.",
+            "how_to_add": "Add an optional orchestration mode that can distribute pattern jobs to worker nodes, with JSON job definitions and result aggregation."
+          },
+          {
+            "feature": "Platform compatibility matrix and GPU vendor caveats (NVIDIA-only OpenCL reliability).",
+            "why_it_matters": "solVanityPlus warns about Windows + AMD issues and documents supported platforms; users need clear expectations.",
+            "how_to_add": "Document supported OS/GPU combinations and add runtime warnings when unsupported OpenCL platforms are detected."
+          },
+          {
+            "feature": "CPU core reservation guidance for multi-GPU OpenCL workloads.",
+            "why_it_matters": "solVanityPlus notes per-GPU CPU core usage; helps avoid stalls and misleading performance expectations.",
+            "how_to_add": "Surface a recommendation in the UI/CLI when enabling multiple GPUs, and suggest a minimum CPU core count."
+          }
+        ]
+      },
+      {
+        "source_zip": "vanity-btc-main.zip",
+        "missing_features": [
+          {
+            "feature": "Browser-based generator + offline-first usage.",
+            "why_it_matters": "vanity-btc demonstrates a web UI that runs fully offline; aligns with normie UX expectations.",
+            "how_to_add": "Consider a web companion or offline-capable UI mode for simple CPU vanity generation with clear offline messaging."
+          },
+          {
+            "feature": "User-controlled thread count in UI.",
+            "why_it_matters": "vanity-btc exposes thread controls for performance tuning in constrained environments.",
+            "how_to_add": "Expose a threads slider in Advanced settings and tie it to the CPU worker pool size."
+          },
+          {
+            "feature": "Reveal-private-key gating in UI.",
+            "why_it_matters": "vanity-btc hides private keys until the user explicitly reveals them.",
+            "how_to_add": "Add an explicit “Reveal private key” action that is disabled by default until a match is found."
+          },
+          {
+            "feature": "Desktop Electron app packaging option for offline use.",
+            "why_it_matters": "vanity-btc ships an Electron desktop app; some users may prefer a simple offline app.",
+            "how_to_add": "Keep Tauri as primary, but document an optional lightweight offline build (or port simple mode to a webview-only package) if needed."
+          }
+        ]
+      }
+    ]
+  }
+}
