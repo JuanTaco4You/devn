@@ -6,7 +6,6 @@ edition.workspace = true
 [features]
 default = ["wgpu-backend"]
 wgpu-backend = ["wgpu", "bytemuck"]
-cuda = ["cudarc"]
 
 [dependencies]
 omnivanity-crypto = { workspace = true }
@@ -22,9 +21,6 @@ hex = "0.4"
 wgpu = { version = "23", optional = true }
 bytemuck = { version = "1.16", features = ["derive"], optional = true }
 pollster = "0.4"
-
-# CUDA (NVIDIA only - Tier 2 optional)
-cudarc = { version = "0.12", optional = true, features = ["cuda-12050"] }
 
 [build-dependencies]
 cc = "1"
