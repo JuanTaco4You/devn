@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
@@ -42,7 +42,7 @@ function App() {
   const [caseInsensitive, setCaseInsensitive] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
-  const [stats, setStats] = useState<SearchStats | null>(null);
+  const [stats, _setStats] = useState<SearchStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
 
@@ -51,7 +51,7 @@ function App() {
       setError("Please enter a pattern");
       return;
     }
-    
+
     setError(null);
     setResult(null);
     setIsSearching(true);
@@ -64,7 +64,7 @@ function App() {
         patternType: patternType,
         caseInsensitive: caseInsensitive,
       });
-      
+
       setResult(searchResult);
     } catch (e) {
       setError(String(e));
@@ -209,7 +209,7 @@ function App() {
         {result && (
           <section className="card result-section">
             <h2>🎉 Match Found!</h2>
-            
+
             <div className="result-field">
               <label>Address</label>
               <div className="result-value address">
@@ -248,7 +248,7 @@ function App() {
             </div>
 
             <div className="warning-box">
-              ⚠️ <strong>Important:</strong> Copy your private key immediately and store it securely. 
+              ⚠️ <strong>Important:</strong> Copy your private key immediately and store it securely.
               It will not be saved after closing this window.
             </div>
           </section>
