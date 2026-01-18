@@ -148,6 +148,7 @@ fn list_chains() -> Vec<ChainInfo> {
                         AddressType::Tezos => ("tezos", "Tezos"),
                         AddressType::CashAddr => ("cashaddr", "CashAddr"),
                         AddressType::Cardano => ("cardano", "Cardano"),
+                        AddressType::Monero => ("monero", "Monero"),
                     };
                     AddressTypeInfo {
                         id: id.to_string(),

@@ -36,6 +36,7 @@ pub mod kaspa;
 pub mod tezos;
 pub mod bch;
 pub mod cardano;
+pub mod monero;
 
 // Re-exports
 pub use traits::{Chain, ChainFamily, AddressType, GeneratedAddress};
@@ -85,6 +86,7 @@ pub use midnight::Midnight;
 pub use kaspa::Kaspa;
 pub use tezos::Tezos;
 pub use cardano::Cardano;
+pub use monero::Monero;
 
 // SS58/Polkadot chains
 pub use polkadot::{Ss58Chain, DOT, KSM, ACA, CFG, HDX};
@@ -119,7 +121,7 @@ pub fn all_chains() -> Vec<Box<dyn Chain>> {
         Box::new(Tron), Box::new(Xrp), Box::new(Stellar), Box::new(Aptos), Box::new(Sui),
         Box::new(Near), Box::new(Iota), Box::new(Algorand), Box::new(Filecoin),
         Box::new(Zilliqa), Box::new(Nano), Box::new(Ton), Box::new(Stacks), Box::new(Xdc),
-        Box::new(Midnight), Box::new(Kaspa), Box::new(Tezos), Box::new(Cardano),
+        Box::new(Midnight), Box::new(Kaspa), Box::new(Tezos), Box::new(Cardano), Box::new(Monero),
         // SS58/Polkadot chains
         Box::new(DOT), Box::new(KSM), Box::new(ACA), Box::new(CFG), Box::new(HDX),
     ]
@@ -231,6 +233,7 @@ pub fn get_chain(ticker: &str) -> Option<Box<dyn Chain>> {
         "KAS" => Some(Box::new(Kaspa)),
         "XTZ" => Some(Box::new(Tezos)),
         "ADA" => Some(Box::new(Cardano)),
+        "XMR" => Some(Box::new(Monero)),
         // SS58/Polkadot chains
         "DOT" => Some(Box::new(DOT)),
         "KSM" => Some(Box::new(KSM)),

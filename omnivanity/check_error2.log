@@ -1,0 +1,55 @@
+    Checking omnivanity-crypto v0.1.0 (C:\Users\Big B\OneDrive\Desktop\Desktop Shit\Everything Everything\Everything AntiGravity\devn\omnivanity\crates\omnivanity-crypto)
+warning: unused import: `ecdsa::SigningKey`
+ --> crates\omnivanity-crypto\src\secp256k1.rs:4:5
+  |
+4 |     ecdsa::SigningKey,
+  |     ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `VerifyingKey`
+ --> crates\omnivanity-crypto\src\ed25519.rs:3:33
+  |
+3 | use ed25519_dalek::{SigningKey, VerifyingKey};
+  |                                 ^^^^^^^^^^^^
+
+warning: unused import: `curve25519_dalek::edwards::EdwardsPoint`
+ --> crates\omnivanity-crypto\src\monero.rs:8:5
+  |
+8 | use curve25519_dalek::edwards::EdwardsPoint;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Keccak256`
+ --> crates\omnivanity-crypto\src\monero.rs:9:12
+  |
+9 | use sha3::{Keccak256, Digest}; // Monero uses Keccak for checksums
+  |            ^^^^^^^^^
+
+error[E0369]: cannot multiply `&&EdwardsBasepointTable` by `&curve25519_dalek::Scalar`
+  --> crates\omnivanity-crypto\src\monero.rs:20:42
+   |
+20 |     let point = &ED25519_BASEPOINT_TABLE * scalar;
+   |                 ------------------------ ^ ------ &curve25519_dalek::Scalar
+   |                 |
+   |                 &&EdwardsBasepointTable
+   |
+help: `*` can be used on `&EdwardsBasepointTable` if you dereference the left-hand side
+   |
+20 |     let point = *&ED25519_BASEPOINT_TABLE * scalar;
+   |                 +
+
+warning: unused import: `Digest`
+ --> crates\omnivanity-crypto\src\monero.rs:9:23
+  |
+9 | use sha3::{Keccak256, Digest}; // Monero uses Keccak for checksums
+  |                       ^^^^^^
+
+warning: unused import: `super`
+  --> crates\omnivanity-crypto\src\monero.rs:26:9
+   |
+26 |     use super::*;
+   |         ^^^^^
+
+For more information about this error, try `rustc --explain E0369`.
+warning: `omnivanity-crypto` (lib) generated 6 warnings
+error: could not compile `omnivanity-crypto` (lib) due to 1 previous error; 6 warnings emitted

@@ -71,6 +71,8 @@ pub enum AddressType {
     CashAddr,
     /// Cardano Bech32 address (addr1...)
     Cardano,
+    /// Monero address (4...)
+    Monero,
 }
 
 impl fmt::Display for AddressType {
@@ -103,6 +105,7 @@ impl fmt::Display for AddressType {
             AddressType::Tezos => write!(f, "Tezos"),
             AddressType::CashAddr => write!(f, "CashAddr"),
             AddressType::Cardano => write!(f, "Cardano"),
+            AddressType::Monero => write!(f, "Monero (4...)"),
         }
     }
 }

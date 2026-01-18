@@ -11,3 +11,4 @@ blake2 = "0.10"
 bech32 = { workspace = true }
 sha2 = { workspace = true }
 bs58 = { workspace = true }
+rand.workspace = true
