@@ -140,6 +140,10 @@ fn list_chains() -> Vec<ChainInfo> {
                         AddressType::Filecoin => ("filecoin", "Filecoin"),
                         AddressType::Zilliqa => ("zilliqa", "Zilliqa"),
                         AddressType::Nano => ("nano", "Nano"),
+                        AddressType::Ton => ("ton", "TON"),
+                        AddressType::Stacks => ("stacks", "Stacks"),
+                        AddressType::Xdc => ("xdc", "XDC Network"),
+                        AddressType::Midnight => ("midnight", "Midnight"),
                     };
                     AddressTypeInfo {
                         id: id.to_string(),

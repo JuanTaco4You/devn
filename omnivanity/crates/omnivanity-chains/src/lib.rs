@@ -28,6 +28,10 @@ pub mod polkadot;
 pub mod filecoin;
 pub mod zilliqa;
 pub mod nano;
+pub mod ton;
+pub mod stacks;
+pub mod xdc;
+pub mod midnight;
 
 // Re-exports
 pub use traits::{Chain, ChainFamily, AddressType, GeneratedAddress};
@@ -60,6 +64,10 @@ pub use algorand::Algorand;
 pub use filecoin::Filecoin;
 pub use zilliqa::Zilliqa;
 pub use nano::Nano;
+pub use ton::Ton;
+pub use stacks::Stacks;
+pub use xdc::Xdc;
+pub use midnight::Midnight;
 
 // SS58/Polkadot chains
 pub use polkadot::{Ss58Chain, DOT, KSM, ACA, CFG, HDX};
@@ -110,6 +118,10 @@ pub fn all_chains() -> Vec<Box<dyn Chain>> {
         Box::new(Filecoin),
         Box::new(Zilliqa),
         Box::new(Nano),
+        Box::new(Ton),
+        Box::new(Stacks),
+        Box::new(Xdc),
+        Box::new(Midnight),
         // SS58/Polkadot chains (5)
         Box::new(DOT),
         Box::new(KSM),
@@ -165,6 +177,10 @@ pub fn get_chain(ticker: &str) -> Option<Box<dyn Chain>> {
         "FIL" => Some(Box::new(Filecoin)),
         "ZIL" => Some(Box::new(Zilliqa)),
         "XNO" | "NANO" => Some(Box::new(Nano)),
+        "TON" => Some(Box::new(Ton)),
+        "STX" => Some(Box::new(Stacks)),
+        "XDC" => Some(Box::new(Xdc)),
+        "NIGHT" | "MIDNIGHT" => Some(Box::new(Midnight)),
         // SS58/Polkadot chains
         "DOT" => Some(Box::new(DOT)),
         "KSM" => Some(Box::new(KSM)),

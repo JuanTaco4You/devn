@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
@@ -9,11 +9,11 @@ interface AddressTypeInfo {
   isDefault: boolean;
 }
 
-interface Chain {
+interface ChainInfo {
   ticker: string;
   name: string;
   prefix: string;
-  addressTypes?: AddressTypeInfo[];
+  addressTypes: AddressTypeInfo[];
 }
 
 interface SearchResult {
@@ -26,47 +26,79 @@ interface SearchResult {
   keysPerSecond: number;
 }
 
-interface SearchStats {
-  keysPerSecond: number;
-  totalKeys: number;
-  probability: number;
-  eta: string;
-  running: boolean;
-}
-
-const CHAINS: Chain[] = [
-  { ticker: "ETH", name: "Ethereum", prefix: "0x" },
-  {
-    ticker: "BTC", name: "Bitcoin", prefix: "1/bc1", addressTypes: [
-      { id: "legacy", name: "Legacy (1...)", prefix: "1", isDefault: false },
-      { id: "segwit", name: "SegWit (bc1q...)", prefix: "bc1q", isDefault: true },
-    ]
-  },
-  { ticker: "SOL", name: "Solana", prefix: "" },
-  { ticker: "LTC", name: "Litecoin", prefix: "L/ltc1" },
-  { ticker: "DOGE", name: "Dogecoin", prefix: "D" },
-  { ticker: "ZEC", name: "Zcash", prefix: "t1" },
-];
+// Chain categories for organized display
+const CHAIN_CATEGORIES: Record<string, string[]> = {
+  "🔷 EVM": ["ETH", "BNB", "MATIC", "ARB", "OP", "AVAX", "FTM", "GNO", "CELO", "XDC"],
+  "₿ Bitcoin": ["BTC", "LTC", "DOGE", "DASH", "ZEC", "RVN", "DGB"],
+  "🌌 Cosmos": ["ATOM", "OSMO", "INJ", "SEI", "TIA", "JUNO", "KAVA", "SCRT", "RUNE", "CRO"],
+  "🔮 Layer 1": ["SOL", "TON", "DOT", "KSM", "NEAR", "ALGO", "FIL", "STX", "NIGHT"],
+  "💎 Next Gen": ["APT", "SUI", "XRP", "XLM", "TRX", "IOTA", "ZIL", "XNO"],
+  "🔹 Substrate": ["DOT", "KSM", "ACA", "CFG", "HDX"],
+};
 
 function App() {
-  const [selectedChain, setSelectedChain] = useState<Chain>(CHAINS[0]);
+  const [chains, setChains] = useState<ChainInfo[]>([]);
+  const [selectedChain, setSelectedChain] = useState<ChainInfo | null>(null);
   const [addressType, setAddressType] = useState<string | null>(null);
   const [pattern, setPattern] = useState("");
   const [patternType, setPatternType] = useState<"prefix" | "suffix" | "contains">("prefix");
   const [caseInsensitive, setCaseInsensitive] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
-  const [stats, _setStats] = useState<SearchStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
+  // Load chains from backend
+  useEffect(() => {
+    async function loadChains() {
+      try {
+        const chainList = await invoke<ChainInfo[]>("list_chains");
+        setChains(chainList);
+        if (chainList.length > 0) {
+          setSelectedChain(chainList[0]);
+        }
+      } catch (e) {
+        console.error("Failed to load chains:", e);
+      }
+    }
+    loadChains();
+  }, []);
+
+  // Filter chains by search and category
+  const filteredChains = useMemo(() => {
+    let result = chains;
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(c =>
+        c.ticker.toLowerCase().includes(query) ||
+        c.name.toLowerCase().includes(query)
+      );
+    }
+
+    if (selectedCategory !== "All") {
+      const categoryTickers = CHAIN_CATEGORIES[selectedCategory] || [];
+      result = result.filter(c => categoryTickers.includes(c.ticker));
+    }
+
+    return result;
+  }, [chains, searchQuery, selectedCategory]);
 
   // Get current prefix based on selected address type
-  const currentPrefix = addressType && selectedChain.addressTypes
-    ? selectedChain.addressTypes.find(at => at.id === addressType)?.prefix || selectedChain.prefix
-    : selectedChain.prefix;
+  const currentPrefix = useMemo(() => {
+    if (!selectedChain) return "";
+    if (addressType && selectedChain.addressTypes) {
+      const at = selectedChain.addressTypes.find(a => a.id === addressType);
+      if (at) return at.prefix;
+    }
+    return selectedChain.prefix;
+  }, [selectedChain, addressType]);
+
   const startSearch = useCallback(async () => {
-    if (!pattern.trim()) {
-      setError("Please enter a pattern");
+    if (!selectedChain || !pattern.trim()) {
+      setError("Please select a chain and enter a pattern");
       return;
     }
 
@@ -105,6 +137,8 @@ function App() {
     navigator.clipboard.writeText(text);
   };
 
+  const categories = ["All", ...Object.keys(CHAIN_CATEGORIES)];
+
   return (
     <div className="app">
       <header className="header">
@@ -112,30 +146,64 @@ function App() {
           <span className="logo-omni">Omni</span>
           <span className="logo-vanity">Vanity</span>
         </h1>
-        <p className="tagline">Multi-chain vanity wallet generator</p>
+        <p className="tagline">{chains.length} chains supported</p>
       </header>
 
       <main className="main">
-        {/* Chain Selector */}
+        {/* Chain Selector with Search */}
         <section className="card chain-selector">
-          <h2>Select Chain</h2>
+          <div className="chain-header">
+            <h2>Select Chain</h2>
+            <div className="chain-search">
+              <input
+                type="text"
+                placeholder="🔍 Search chains..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+            </div>
+          </div>
+
+          {/* Category Tabs */}
+          <div className="category-tabs">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                className={`category-tab ${selectedCategory === cat ? "active" : ""}`}
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Chain Grid */}
           <div className="chain-grid">
-            {CHAINS.map((chain) => (
+            {filteredChains.map((chain) => (
               <button
                 key={chain.ticker}
-                className={`chain-btn ${selectedChain.ticker === chain.ticker ? "active" : ""}`}
-                onClick={() => setSelectedChain(chain)}
+                className={`chain-btn ${selectedChain?.ticker === chain.ticker ? "active" : ""}`}
+                onClick={() => {
+                  setSelectedChain(chain);
+                  setAddressType(null);
+                }}
                 disabled={isSearching}
               >
                 <span className="chain-ticker">{chain.ticker}</span>
                 <span className="chain-name">{chain.name}</span>
+                <span className="chain-prefix">{chain.prefix}</span>
               </button>
             ))}
           </div>
+
+          {filteredChains.length === 0 && (
+            <p className="no-chains">No chains match your search</p>
+          )}
         </section>
 
         {/* Address Type Selector (for chains with multiple types) */}
-        {selectedChain.addressTypes && selectedChain.addressTypes.length > 1 && (
+        {selectedChain?.addressTypes && selectedChain.addressTypes.length > 1 && (
           <section className="card address-type-selector">
             <h2>Address Type</h2>
             <div className="radio-group">
@@ -202,6 +270,7 @@ function App() {
           <button
             className={`search-btn ${isSearching ? "searching" : ""}`}
             onClick={isSearching ? stopSearch : startSearch}
+            disabled={!selectedChain}
           >
             {isSearching ? (
               <>
@@ -213,28 +282,6 @@ function App() {
             )}
           </button>
         </section>
-
-        {/* Search Stats */}
-        {isSearching && stats && (
-          <section className="card stats-section">
-            <div className="stat">
-              <span className="stat-value">{(stats.keysPerSecond / 1000).toFixed(1)}K</span>
-              <span className="stat-label">keys/sec</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{stats.totalKeys.toLocaleString()}</span>
-              <span className="stat-label">tested</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{(stats.probability * 100).toFixed(1)}%</span>
-              <span className="stat-label">probability</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{stats.eta}</span>
-              <span className="stat-label">ETA 50%</span>
-            </div>
-          </section>
-        )}
 
         {/* Error */}
         {error && (
@@ -294,7 +341,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <p>OmniVanity v0.1.0 • CPU Mode • All keys generated locally</p>
+        <p>OmniVanity v0.2.0 • {chains.length} Chains • CPU Mode • All keys generated locally</p>
       </footer>
     </div>
   );

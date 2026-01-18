@@ -55,6 +55,14 @@ pub enum AddressType {
     Zilliqa,
     /// Nano address (nano_...)
     Nano,
+    /// TON address (EQ...)
+    Ton,
+    /// Stacks c32check address (SP...)
+    Stacks,
+    /// XDC Network address (xdc...)
+    Xdc,
+    /// Midnight Bech32m address (mid1...)
+    Midnight,
 }
 
 impl fmt::Display for AddressType {
@@ -79,6 +87,10 @@ impl fmt::Display for AddressType {
             AddressType::Filecoin => write!(f, "Filecoin"),
             AddressType::Zilliqa => write!(f, "Zilliqa"),
             AddressType::Nano => write!(f, "Nano"),
+            AddressType::Ton => write!(f, "TON"),
+            AddressType::Stacks => write!(f, "Stacks"),
+            AddressType::Xdc => write!(f, "XDC Network"),
+            AddressType::Midnight => write!(f, "Midnight"),
         }
     }
 }
