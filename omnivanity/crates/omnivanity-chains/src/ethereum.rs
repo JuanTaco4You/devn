@@ -40,7 +40,8 @@ impl EvmChain {
     }
 }
 
-// Pre-defined EVM chains
+// Pre-defined EVM chains and tokens
+// Native EVM chains
 pub const ETH: EvmChain = EvmChain::new("ETH", "Ethereum");
 pub const BNB: EvmChain = EvmChain::new("BNB", "BNB Smart Chain");
 pub const MATIC: EvmChain = EvmChain::new("MATIC", "Polygon");
@@ -50,6 +51,60 @@ pub const AVAX: EvmChain = EvmChain::new("AVAX", "Avalanche C-Chain");
 pub const FTM: EvmChain = EvmChain::new("FTM", "Fantom");
 pub const GNO: EvmChain = EvmChain::new("GNO", "Gnosis Chain");
 pub const CELO: EvmChain = EvmChain::new("CELO", "Celo");
+pub const ETC: EvmChain = EvmChain::new("ETC", "Ethereum Classic");
+pub const VET: EvmChain = EvmChain::new("VET", "VeChain");
+pub const FLR: EvmChain = EvmChain::new("FLR", "Flare");
+pub const CRO: EvmChain = EvmChain::new("CRO", "Cronos");
+pub const MNT: EvmChain = EvmChain::new("MNT", "Mantle");
+pub const IMX: EvmChain = EvmChain::new("IMX", "Immutable");
+pub const HYPE: EvmChain = EvmChain::new("HYPE", "Hyperliquid");
+pub const M: EvmChain = EvmChain::new("M", "MemeCore");
+
+// EVM Tokens (DeFi)
+pub const LINK: EvmChain = EvmChain::new("LINK", "Chainlink");
+pub const UNI: EvmChain = EvmChain::new("UNI", "Uniswap");
+pub const AAVE: EvmChain = EvmChain::new("AAVE", "Aave");
+pub const CRV: EvmChain = EvmChain::new("CRV", "Curve DAO");
+pub const LDO: EvmChain = EvmChain::new("LDO", "Lido DAO");
+pub const ETHFI: EvmChain = EvmChain::new("ETHFI", "ether.fi");
+pub const AERO: EvmChain = EvmChain::new("AERO", "Aerodrome");
+pub const MORPHO: EvmChain = EvmChain::new("MORPHO", "Morpho");
+pub const ZRO: EvmChain = EvmChain::new("ZRO", "LayerZero");
+pub const ONDO: EvmChain = EvmChain::new("ONDO", "Ondo");
+pub const CAKE: EvmChain = EvmChain::new("CAKE", "PancakeSwap");
+pub const VIRTUAL: EvmChain = EvmChain::new("VIRTUAL", "Virtuals Protocol");
+pub const MYX: EvmChain = EvmChain::new("MYX", "MYX Finance");
+pub const LIT: EvmChain = EvmChain::new("LIT", "Lighter");
+
+// EVM Tokens (Stablecoins/Gold)
+pub const USDE: EvmChain = EvmChain::new("USDe", "Ethena USDe");
+pub const DAI: EvmChain = EvmChain::new("DAI", "Dai");
+pub const XAUT: EvmChain = EvmChain::new("XAUt", "Tether Gold");
+pub const PAXG: EvmChain = EvmChain::new("PAXG", "PAX Gold");
+pub const PYUSD: EvmChain = EvmChain::new("PYUSD", "PayPal USD");
+
+// EVM Tokens (Exchange)
+pub const LEO: EvmChain = EvmChain::new("LEO", "UNUS SED LEO");
+pub const BGB: EvmChain = EvmChain::new("BGB", "Bitget Token");
+pub const OKB: EvmChain = EvmChain::new("OKB", "OKB");
+pub const KCS: EvmChain = EvmChain::new("KCS", "KuCoin Token");
+pub const GT: EvmChain = EvmChain::new("GT", "GateToken");
+pub const NEXO: EvmChain = EvmChain::new("NEXO", "Nexo");
+pub const CHZ: EvmChain = EvmChain::new("CHZ", "Chiliz");
+
+// EVM Tokens (Memes & Other)
+pub const SHIB: EvmChain = EvmChain::new("SHIB", "Shiba Inu");
+pub const PEPE: EvmChain = EvmChain::new("PEPE", "Pepe");
+pub const FLOKI: EvmChain = EvmChain::new("FLOKI", "FLOKI");
+pub const WLD: EvmChain = EvmChain::new("WLD", "Worldcoin");
+pub const FET: EvmChain = EvmChain::new("FET", "ASI Alliance");
+pub const QNT: EvmChain = EvmChain::new("QNT", "Quant");
+pub const ENA: EvmChain = EvmChain::new("ENA", "Ethena");
+pub const SKY: EvmChain = EvmChain::new("SKY", "Sky");
+pub const ASTER: EvmChain = EvmChain::new("ASTER", "Aster");
+pub const WLFI: EvmChain = EvmChain::new("WLFI", "World Liberty");
+pub const SPX: EvmChain = EvmChain::new("SPX", "SPX6900");
+pub const CMC20: EvmChain = EvmChain::new("CMC20", "CMC 20 Index");
 
 // Keep legacy Ethereum struct for backwards compatibility
 pub type Ethereum = EvmChain;

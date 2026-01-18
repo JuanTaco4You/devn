@@ -1,7 +1,7 @@
 //! OmniVanity Chain Adapters
 //!
 //! Trait-based abstraction for multi-chain vanity address generation.
-//! Supports 50+ chains across multiple address families.
+//! Supports 100+ chains/tokens across multiple address families.
 
 pub mod traits;
 
@@ -32,12 +32,26 @@ pub mod ton;
 pub mod stacks;
 pub mod xdc;
 pub mod midnight;
+pub mod kaspa;
+pub mod tezos;
+pub mod bch;
+pub mod cardano;
 
 // Re-exports
 pub use traits::{Chain, ChainFamily, AddressType, GeneratedAddress};
 
-// EVM chains
-pub use ethereum::{EvmChain, ETH, BNB, MATIC, ARB, OP, AVAX, FTM, GNO, CELO};
+// EVM chains and tokens (50+)
+pub use ethereum::{
+    EvmChain, ETH, BNB, MATIC, ARB, OP, AVAX, FTM, GNO, CELO,
+    ETC, VET, FLR, CRO, MNT, IMX, HYPE, M,
+    LINK, UNI, AAVE, CRV, LDO, ETHFI, AERO, MORPHO, ZRO, ONDO, CAKE, VIRTUAL, MYX, LIT,
+    USDE, DAI, XAUT, PAXG, PYUSD,
+    LEO, BGB, OKB, KCS, GT, NEXO, CHZ,
+    SHIB, PEPE, FLOKI, WLD, FET, QNT, ENA, SKY, ASTER, WLFI, SPX, CMC20,
+};
+
+// Solana chains and tokens
+pub use solana::{SolanaChain, SOL, TRUMP, BONK, PENGU, PUMP, JUP, RENDER};
 
 // UTXO chains
 pub use bitcoin::Bitcoin;
@@ -47,12 +61,12 @@ pub use zcash::Zcash;
 pub use dash::Dash;
 pub use ravencoin::Ravencoin;
 pub use digibyte::Digibyte;
+pub use bch::BitcoinCash;
 
 // Cosmos chains
-pub use cosmos::{CosmosChain, ATOM, OSMO, INJ, SEI, TIA, JUNO, KAVA, SCRT, RUNE, CRO};
+pub use cosmos::{CosmosChain, ATOM, OSMO, INJ, SEI, TIA, JUNO, KAVA, SCRT, RUNE};
 
 // Other chains
-pub use solana::Solana;
 pub use tron::Tron;
 pub use xrp::Xrp;
 pub use stellar::Stellar;
@@ -68,66 +82,46 @@ pub use ton::Ton;
 pub use stacks::Stacks;
 pub use xdc::Xdc;
 pub use midnight::Midnight;
+pub use kaspa::Kaspa;
+pub use tezos::Tezos;
+pub use cardano::Cardano;
 
 // SS58/Polkadot chains
 pub use polkadot::{Ss58Chain, DOT, KSM, ACA, CFG, HDX};
 
-/// Get all supported chains (50 total)
+/// Get all supported chains (100+)
 pub fn all_chains() -> Vec<Box<dyn Chain>> {
     vec![
-        // EVM chains (9)
-        Box::new(ETH),
-        Box::new(BNB),
-        Box::new(MATIC),
-        Box::new(ARB),
-        Box::new(OP),
-        Box::new(AVAX),
-        Box::new(FTM),
-        Box::new(GNO),
-        Box::new(CELO),
-        // UTXO chains (7)
-        Box::new(Bitcoin),
-        Box::new(Litecoin),
-        Box::new(Dogecoin),
-        Box::new(Zcash),
-        Box::new(Dash),
-        Box::new(Ravencoin),
-        Box::new(Digibyte),
-        // Cosmos chains (10)
-        Box::new(ATOM),
-        Box::new(OSMO),
-        Box::new(INJ),
-        Box::new(SEI),
-        Box::new(TIA),
-        Box::new(JUNO),
-        Box::new(KAVA),
-        Box::new(SCRT),
-        Box::new(RUNE),
-        Box::new(CRO),
-        // Solana
-        Box::new(Solana),
-        // Other specialized chains
-        Box::new(Tron),
-        Box::new(Xrp),
-        Box::new(Stellar),
-        Box::new(Aptos),
-        Box::new(Sui),
-        Box::new(Near),
-        Box::new(Iota),
-        Box::new(Algorand),
-        Box::new(Filecoin),
-        Box::new(Zilliqa),
-        Box::new(Nano),
-        Box::new(Ton),
-        Box::new(Stacks),
-        Box::new(Xdc),
-        Box::new(Midnight),
-        // SS58/Polkadot chains (5)
-        Box::new(DOT),
-        Box::new(KSM),
-        Box::new(ACA),
-        Box::new(CFG),
-        Box::new(HDX),
+        // EVM chains and tokens
+        Box::new(ETH), Box::new(BNB), Box::new(MATIC), Box::new(ARB), Box::new(OP),
+        Box::new(AVAX), Box::new(FTM), Box::new(GNO), Box::new(CELO), Box::new(ETC),
+        Box::new(VET), Box::new(FLR), Box::new(CRO), Box::new(MNT), Box::new(IMX),
+        Box::new(HYPE), Box::new(M),
+        Box::new(LINK), Box::new(UNI), Box::new(AAVE), Box::new(CRV), Box::new(LDO),
+        Box::new(ETHFI), Box::new(AERO), Box::new(MORPHO), Box::new(ZRO), Box::new(ONDO),
+        Box::new(CAKE), Box::new(VIRTUAL), Box::new(MYX), Box::new(LIT),
+        Box::new(USDE), Box::new(DAI), Box::new(XAUT), Box::new(PAXG), Box::new(PYUSD),
+        Box::new(LEO), Box::new(BGB), Box::new(OKB), Box::new(KCS), Box::new(GT),
+        Box::new(NEXO), Box::new(CHZ),
+        Box::new(SHIB), Box::new(PEPE), Box::new(FLOKI), Box::new(WLD), Box::new(FET),
+        Box::new(QNT), Box::new(ENA), Box::new(SKY), Box::new(ASTER), Box::new(WLFI),
+        Box::new(SPX), Box::new(CMC20),
+        // Solana chains and tokens
+        Box::new(SOL), Box::new(TRUMP), Box::new(BONK), Box::new(PENGU), Box::new(PUMP),
+        Box::new(JUP), Box::new(RENDER),
+        // UTXO chains
+        Box::new(Bitcoin), Box::new(Litecoin), Box::new(Dogecoin), Box::new(Zcash),
+        Box::new(Dash), Box::new(Ravencoin), Box::new(Digibyte), Box::new(BitcoinCash),
+        // Cosmos chains
+        Box::new(ATOM), Box::new(OSMO), Box::new(INJ), Box::new(SEI), Box::new(TIA),
+        Box::new(JUNO), Box::new(KAVA), Box::new(SCRT), Box::new(RUNE),
+        // Other chains
+        Box::new(Tron), Box::new(Xrp), Box::new(Stellar), Box::new(Aptos), Box::new(Sui),
+        Box::new(Near), Box::new(Iota), Box::new(Algorand), Box::new(Filecoin),
+        Box::new(Zilliqa), Box::new(Nano), Box::new(Ton), Box::new(Stacks), Box::new(Xdc),
+        Box::new(Midnight), Box::new(Kaspa), Box::new(Tezos), Box::new(Cardano),
+        // SS58/Polkadot chains
+        Box::new(DOT), Box::new(KSM), Box::new(ACA), Box::new(CFG), Box::new(HDX),
     ]
 }
 
@@ -144,6 +138,61 @@ pub fn get_chain(ticker: &str) -> Option<Box<dyn Chain>> {
         "FTM" => Some(Box::new(FTM)),
         "GNO" => Some(Box::new(GNO)),
         "CELO" => Some(Box::new(CELO)),
+        "ETC" => Some(Box::new(ETC)),
+        "VET" => Some(Box::new(VET)),
+        "FLR" => Some(Box::new(FLR)),
+        "CRO" => Some(Box::new(CRO)),
+        "MNT" => Some(Box::new(MNT)),
+        "IMX" => Some(Box::new(IMX)),
+        "HYPE" => Some(Box::new(HYPE)),
+        "M" => Some(Box::new(M)),
+        // EVM tokens
+        "LINK" => Some(Box::new(LINK)),
+        "UNI" => Some(Box::new(UNI)),
+        "AAVE" => Some(Box::new(AAVE)),
+        "CRV" => Some(Box::new(CRV)),
+        "LDO" => Some(Box::new(LDO)),
+        "ETHFI" => Some(Box::new(ETHFI)),
+        "AERO" => Some(Box::new(AERO)),
+        "MORPHO" => Some(Box::new(MORPHO)),
+        "ZRO" => Some(Box::new(ZRO)),
+        "ONDO" => Some(Box::new(ONDO)),
+        "CAKE" => Some(Box::new(CAKE)),
+        "VIRTUAL" => Some(Box::new(VIRTUAL)),
+        "MYX" => Some(Box::new(MYX)),
+        "LIT" => Some(Box::new(LIT)),
+        "USDE" => Some(Box::new(USDE)),
+        "DAI" => Some(Box::new(DAI)),
+        "XAUT" => Some(Box::new(XAUT)),
+        "PAXG" => Some(Box::new(PAXG)),
+        "PYUSD" => Some(Box::new(PYUSD)),
+        "LEO" => Some(Box::new(LEO)),
+        "BGB" => Some(Box::new(BGB)),
+        "OKB" => Some(Box::new(OKB)),
+        "KCS" => Some(Box::new(KCS)),
+        "GT" => Some(Box::new(GT)),
+        "NEXO" => Some(Box::new(NEXO)),
+        "CHZ" => Some(Box::new(CHZ)),
+        "SHIB" => Some(Box::new(SHIB)),
+        "PEPE" => Some(Box::new(PEPE)),
+        "FLOKI" => Some(Box::new(FLOKI)),
+        "WLD" => Some(Box::new(WLD)),
+        "FET" => Some(Box::new(FET)),
+        "QNT" => Some(Box::new(QNT)),
+        "ENA" => Some(Box::new(ENA)),
+        "SKY" => Some(Box::new(SKY)),
+        "ASTER" => Some(Box::new(ASTER)),
+        "WLFI" => Some(Box::new(WLFI)),
+        "SPX" => Some(Box::new(SPX)),
+        "CMC20" => Some(Box::new(CMC20)),
+        // Solana chains and tokens
+        "SOL" => Some(Box::new(SOL)),
+        "TRUMP" => Some(Box::new(TRUMP)),
+        "BONK" => Some(Box::new(BONK)),
+        "PENGU" => Some(Box::new(PENGU)),
+        "PUMP" => Some(Box::new(PUMP)),
+        "JUP" => Some(Box::new(JUP)),
+        "RENDER" => Some(Box::new(RENDER)),
         // UTXO chains
         "BTC" => Some(Box::new(Bitcoin)),
         "LTC" => Some(Box::new(Litecoin)),
@@ -152,6 +201,7 @@ pub fn get_chain(ticker: &str) -> Option<Box<dyn Chain>> {
         "DASH" => Some(Box::new(Dash)),
         "RVN" => Some(Box::new(Ravencoin)),
         "DGB" => Some(Box::new(Digibyte)),
+        "BCH" => Some(Box::new(BitcoinCash)),
         // Cosmos chains
         "ATOM" => Some(Box::new(ATOM)),
         "OSMO" => Some(Box::new(OSMO)),
@@ -162,10 +212,7 @@ pub fn get_chain(ticker: &str) -> Option<Box<dyn Chain>> {
         "KAVA" => Some(Box::new(KAVA)),
         "SCRT" => Some(Box::new(SCRT)),
         "RUNE" => Some(Box::new(RUNE)),
-        "CRO" => Some(Box::new(CRO)),
-        // Solana
-        "SOL" => Some(Box::new(Solana)),
-        // Other specialized chains
+        // Other chains
         "TRX" => Some(Box::new(Tron)),
         "XRP" => Some(Box::new(Xrp)),
         "XLM" => Some(Box::new(Stellar)),
@@ -181,12 +228,17 @@ pub fn get_chain(ticker: &str) -> Option<Box<dyn Chain>> {
         "STX" => Some(Box::new(Stacks)),
         "XDC" => Some(Box::new(Xdc)),
         "NIGHT" | "MIDNIGHT" => Some(Box::new(Midnight)),
+        "KAS" => Some(Box::new(Kaspa)),
+        "XTZ" => Some(Box::new(Tezos)),
+        "ADA" => Some(Box::new(Cardano)),
         // SS58/Polkadot chains
         "DOT" => Some(Box::new(DOT)),
         "KSM" => Some(Box::new(KSM)),
         "ACA" => Some(Box::new(ACA)),
         "CFG" => Some(Box::new(CFG)),
         "HDX" => Some(Box::new(HDX)),
+        // Substrate-based
+        "TAO" => Some(Box::new(DOT)), // Bittensor uses similar to Polkadot
         _ => None,
     }
 }

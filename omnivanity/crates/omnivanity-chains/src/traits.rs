@@ -63,6 +63,14 @@ pub enum AddressType {
     Xdc,
     /// Midnight Bech32m address (mid1...)
     Midnight,
+    /// Kaspa Bech32 address (kaspa:...)
+    Kaspa,
+    /// Tezos Base58Check address (tz1...)
+    Tezos,
+    /// Bitcoin Cash CashAddr (bitcoincash:q...)
+    CashAddr,
+    /// Cardano Bech32 address (addr1...)
+    Cardano,
 }
 
 impl fmt::Display for AddressType {
@@ -91,6 +99,10 @@ impl fmt::Display for AddressType {
             AddressType::Stacks => write!(f, "Stacks"),
             AddressType::Xdc => write!(f, "XDC Network"),
             AddressType::Midnight => write!(f, "Midnight"),
+            AddressType::Kaspa => write!(f, "Kaspa"),
+            AddressType::Tezos => write!(f, "Tezos"),
+            AddressType::CashAddr => write!(f, "CashAddr"),
+            AddressType::Cardano => write!(f, "Cardano"),
         }
     }
 }
