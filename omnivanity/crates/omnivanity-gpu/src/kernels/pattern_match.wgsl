@@ -42,11 +42,18 @@ fn hex_to_nibble(c: u32) -> u32 {
     return 255u; // Invalid
 }
 
-// Get byte at index from u32 array
-fn get_byte(arr: ptr<storage, array<u32>, read>, byte_idx: u32) -> u32 {
+// Get byte at index from addresses array (global accessor)
+fn get_address_byte(byte_idx: u32) -> u32 {
     let word_idx = byte_idx / 4u;
     let byte_offset = byte_idx % 4u;
-    return ((*arr)[word_idx] >> (byte_offset * 8u)) & 0xFFu;
+    return (addresses[word_idx] >> (byte_offset * 8u)) & 0xFFu;
+}
+
+// Get byte at index from pattern array (global accessor)
+fn get_pattern_byte(byte_idx: u32) -> u32 {
+    let word_idx = byte_idx / 4u;
+    let byte_offset = byte_idx % 4u;
+    return (pattern[word_idx] >> (byte_offset * 8u)) & 0xFFu;
 }
 
 // Compare bytes with optional case insensitivity
@@ -89,8 +96,8 @@ fn pattern_match(@builtin(global_invocation_id) global_id: vec3<u32>) {
         // For now, start at byte 0 and let CPU handle prefix stripping
         matched = true;
         for (var i = 0u; i < pattern_len; i = i + 1u) {
-            let addr_byte = get_byte(&addresses, addr_base * 4u + i);
-            let pat_byte = get_byte(&pattern, i);
+            let addr_byte = get_address_byte(addr_base * 4u + i);
+            let pat_byte = get_pattern_byte(i);
             if (!bytes_equal(addr_byte, pat_byte, case_insensitive)) {
                 matched = false;
                 break;
@@ -100,8 +107,8 @@ fn pattern_match(@builtin(global_invocation_id) global_id: vec3<u32>) {
         // SUFFIX match: compare last pattern_len bytes
         matched = true;
         for (var i = 0u; i < pattern_len; i = i + 1u) {
-            let addr_byte = get_byte(&addresses, addr_base * 4u + addr_len - pattern_len + i);
-            let pat_byte = get_byte(&pattern, i);
+            let addr_byte = get_address_byte(addr_base * 4u + addr_len - pattern_len + i);
+            let pat_byte = get_pattern_byte(i);
             if (!bytes_equal(addr_byte, pat_byte, case_insensitive)) {
                 matched = false;
                 break;
@@ -113,8 +120,8 @@ fn pattern_match(@builtin(global_invocation_id) global_id: vec3<u32>) {
         for (var start = 0u; start <= max_start; start = start + 1u) {
             var found = true;
             for (var i = 0u; i < pattern_len; i = i + 1u) {
-                let addr_byte = get_byte(&addresses, addr_base * 4u + start + i);
-                let pat_byte = get_byte(&pattern, i);
+                let addr_byte = get_address_byte(addr_base * 4u + start + i);
+                let pat_byte = get_pattern_byte(i);
                 if (!bytes_equal(addr_byte, pat_byte, case_insensitive)) {
                     found = false;
                     break;
