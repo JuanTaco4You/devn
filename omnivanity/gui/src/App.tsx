@@ -26,14 +26,36 @@ interface SearchResult {
   keysPerSecond: number;
 }
 
-// Chain categories for organized display
+// Chain categories organized by ADDRESS FORMAT (not chain name)
 const CHAIN_CATEGORIES: Record<string, string[]> = {
-  "🔷 EVM": ["ETH", "BNB", "MATIC", "ARB", "OP", "AVAX", "FTM", "GNO", "CELO", "XDC"],
-  "₿ Bitcoin": ["BTC", "LTC", "DOGE", "DASH", "ZEC", "RVN", "DGB"],
-  "🌌 Cosmos": ["ATOM", "OSMO", "INJ", "SEI", "TIA", "JUNO", "KAVA", "SCRT", "RUNE", "CRO"],
-  "🔮 Layer 1": ["SOL", "TON", "DOT", "KSM", "NEAR", "ALGO", "FIL", "STX", "NIGHT"],
-  "💎 Next Gen": ["APT", "SUI", "XRP", "XLM", "TRX", "IOTA", "ZIL", "XNO"],
-  "🔹 Substrate": ["DOT", "KSM", "ACA", "CFG", "HDX"],
+  "🔷 EVM (0x...)": [
+    "ETH", "BNB", "MATIC", "ARB", "OP", "AVAX", "FTM", "GNO", "CELO", "ETC",
+    "VET", "FLR", "CRO", "MNT", "IMX", "HYPE", "MEMECORE", "MONAD", "IP",
+    "LINK", "UNI", "AAVE", "CRV", "LDO", "ETHFI", "AERO", "MORPHO", "ZRO", "ONDO",
+    "CAKE", "VIRTUAL", "MYX", "LIT", "USDT", "USDC", "USDE", "DAI", "XAUT", "PAXG",
+    "PYUSD", "FDUSD", "TUSD", "USDG", "USD1", "RLUSD", "LEO", "BGB", "OKB", "KCS",
+    "GT", "NEXO", "CHZ", "SHIB", "PEPE", "FLOKI", "WLD", "FET", "QNT", "ENA",
+    "SKY", "ASTER", "WLFI", "SPX", "CMC20", "XDC", "HBAR"
+  ],
+  "₿ UTXO (Bitcoin-Like)": [
+    "BTC", "LTC", "DOGE", "DASH", "ZEC", "RVN", "DGB", "BCH"
+  ],
+  "🌙 Solana (Base58)": [
+    "SOL", "TRUMP", "BONK", "PENGU", "PUMP", "JUP", "RENDER", "USDT-SPL", "USDC-SPL"
+  ],
+  "⚛️ Cosmos (Bech32)": [
+    "ATOM", "OSMO", "INJ", "SEI", "TIA", "JUNO", "KAVA", "SCRT", "RUNE"
+  ],
+  "🔴 Polkadot (SS58)": [
+    "DOT", "KSM", "ACA", "CFG", "HDX", "TAO"
+  ],
+  "🅃 TRON (T...)": [
+    "TRX", "USDT-TRC20", "USDC-TRC20", "USDD"
+  ],
+  "⚡ Other L1s": [
+    "XRP", "XLM", "APT", "SUI", "NEAR", "IOTA", "ALGO", "FIL", "ZIL", "XNO",
+    "TON", "STX", "KAS", "XTZ", "ADA", "XMR", "ICP", "NIGHT"
+  ],
 };
 
 function App() {
