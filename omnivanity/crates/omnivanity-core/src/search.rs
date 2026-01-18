@@ -294,11 +294,11 @@ impl VanitySearch {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use omnivanity_chains::Ethereum;
+    use omnivanity_chains::ETH;
 
     #[test]
     fn test_search_easy_pattern() {
-        let chain = Box::new(Ethereum);
+        let chain = Box::new(ETH);
         let patterns = vec![Pattern::prefix("0")]; // Very easy pattern
         let config = SearchConfig {
             max_attempts: 100000,
