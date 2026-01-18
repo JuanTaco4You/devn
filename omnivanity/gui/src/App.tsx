@@ -32,7 +32,7 @@ const CHAIN_CATEGORIES: Record<string, string[]> = {
     "ETH", "BNB", "MATIC", "ARB", "OP", "AVAX", "FTM", "GNO", "CELO", "ETC",
     "VET", "FLR", "CRO", "MNT", "IMX", "HYPE", "MEMECORE", "MONAD", "IP",
     "LINK", "UNI", "AAVE", "CRV", "LDO", "ETHFI", "AERO", "MORPHO", "ZRO", "ONDO",
-    "CAKE", "VIRTUAL", "MYX", "LIT", "USDT", "USDC", "USDE", "DAI", "XAUT", "PAXG",
+    "CAKE", "VIRTUAL", "MYX", "LIT", "USDT", "USDC", "USDe", "DAI", "XAUt", "PAXG",
     "PYUSD", "FDUSD", "TUSD", "USDG", "USD1", "RLUSD", "LEO", "BGB", "OKB", "KCS",
     "GT", "NEXO", "CHZ", "SHIB", "PEPE", "FLOKI", "WLD", "FET", "QNT", "ENA",
     "SKY", "ASTER", "WLFI", "SPX", "CMC20", "XDC", "HBAR"
