@@ -7,11 +7,16 @@ use std::time::Duration;
 use crossbeam_channel::{bounded, Receiver, Sender};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
 use omnivanity_chains::{Chain, AddressType, GeneratedAddress};
 use omnivanity_pattern::{Pattern, PatternMatcher, PatternType, calculate_difficulty};
 
 use crate::stats::SearchStats;
+
+// GPU support (optional feature)
+#[cfg(feature = "gpu")]
+use omnivanity_gpu::{WgpuEngine, MatchType, GpuSearchConfig, is_gpu_available};
 
 /// Search configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,6 +108,21 @@ impl VanitySearch {
 
     /// Run the search (blocking until found or limits reached)
     pub fn run(&self) -> Option<SearchResult> {
+        // Check if GPU should be used
+        #[cfg(feature = "gpu")]
+        {
+            if self.config.use_gpu && is_gpu_available() {
+                info!("GPU detected, using hybrid CPU+GPU search");
+                return self.run_gpu_hybrid();
+            }
+        }
+        
+        // Fall back to CPU-only search
+        self.run_cpu()
+    }
+    
+    /// CPU-only search (original implementation)
+    fn run_cpu(&self) -> Option<SearchResult> {
         let stats = SearchStats::new();
         let stats_clone = stats.clone();
 
@@ -199,6 +219,129 @@ impl VanitySearch {
         } else {
             None
         }
+    }
+    
+    /// GPU-accelerated hybrid search: CPU generates keys, GPU matches patterns
+    #[cfg(feature = "gpu")]
+    fn run_gpu_hybrid(&self) -> Option<SearchResult> {
+        let stats = SearchStats::new();
+        
+        // Initialize GPU engine
+        let gpu_config = GpuSearchConfig::default();
+        let gpu = match WgpuEngine::new_sync(0, gpu_config) {
+            Ok(g) => {
+                info!("GPU initialized: {}", g.device_name());
+                g
+            }
+            Err(e) => {
+                info!("GPU init failed ({}), falling back to CPU", e);
+                return self.run_cpu();
+            }
+        };
+        
+        // Get pattern info
+        let pattern = self.matcher.patterns()
+            .first()
+            .map(|p| p.value.clone())
+            .unwrap_or_default();
+        let pattern_type = self.matcher.patterns()
+            .first()
+            .map(|p| p.pattern_type)
+            .unwrap_or(PatternType::Prefix);
+        let case_insensitive = self.matcher.patterns()
+            .first()
+            .map(|p| p.case_insensitive)
+            .unwrap_or(false);
+        
+        let match_type = match pattern_type {
+            PatternType::Prefix => MatchType::Prefix,
+            PatternType::Suffix => MatchType::Suffix,
+            PatternType::Contains => MatchType::Contains,
+        };
+        
+        // Batch size for GPU (larger = more GPU utilization)
+        let gpu_batch_size = 8192;
+        let max_time = self.config.max_time_secs;
+        let max_attempts = self.config.max_attempts;
+        
+        // Stats printer thread  
+        let stats_for_printer = stats.clone();
+        let difficulty = self.difficulty;
+        let printer_handle = thread::spawn(move || {
+            while stats_for_printer.is_running() {
+                eprint!("\r{} 🚀GPU", stats_for_printer.format(difficulty));
+                thread::sleep(Duration::from_millis(250));
+            }
+            eprintln!();
+        });
+        
+        let mut result: Option<SearchResult> = None;
+        
+        while stats.is_running() {
+            // Check limits
+            if max_attempts > 0 && stats.total_keys() >= max_attempts {
+                break;
+            }
+            if max_time > 0 && stats.elapsed().as_secs() >= max_time {
+                break;
+            }
+            
+            // Generate batch of addresses on CPU (using rayon)
+            let batch: Vec<GeneratedAddress> = (0..gpu_batch_size)
+                .into_par_iter()
+                .map(|_| self.chain.generate(self.address_type))
+                .collect();
+            
+            // Extract address strings for GPU matching
+            let address_strings: Vec<String> = batch.iter()
+                .map(|a| {
+                    // Strip prefix for matching (e.g., "0x" for EVM)
+                    let prefix = self.chain.address_prefix(self.address_type);
+                    if a.address.starts_with(prefix) && !prefix.is_empty() {
+                        a.address[prefix.len()..].to_string()
+                    } else {
+                        a.address.clone()
+                    }
+                })
+                .collect();
+            
+            // GPU pattern matching
+            let matches = gpu.pattern_match_batch(
+                &address_strings,
+                &pattern,
+                match_type,
+                case_insensitive,
+            );
+            
+            stats.add_keys(gpu_batch_size as u64);
+            
+            // Check for matches and verify on CPU
+            for match_idx in matches {
+                if let Some(matched_address) = batch.get(match_idx) {
+                    // Double check with CPU matcher to ensure correctness (handles prefixes, etc.)
+                    if self.matcher.matches(&matched_address.address).is_some() {
+                        stats.mark_found();
+                        result = Some(SearchResult {
+                            address: matched_address.clone(),
+                            pattern: pattern.clone(),
+                            keys_tested: stats.total_keys(),
+                            time_secs: stats.elapsed().as_secs_f64(),
+                            keys_per_second: stats.keys_per_second(),
+                        });
+                        break;
+                    }
+                }
+            }
+            
+            if result.is_some() {
+                break;
+            }
+        }
+        
+        stats.stop();
+        let _ = printer_handle.join();
+        
+        result
     }
 
     /// Run search with a callback for progress

@@ -61,6 +61,7 @@ omnivanity-core = { path = "crates/omnivanity-core" }
 omnivanity-crypto = { path = "crates/omnivanity-crypto" }
 omnivanity-chains = { path = "crates/omnivanity-chains" }
 omnivanity-pattern = { path = "crates/omnivanity-pattern" }
+omnivanity-gpu = { path = "crates/omnivanity-gpu" }
 
 [profile.release]
 opt-level = 3

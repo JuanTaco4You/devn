@@ -2979,6 +2979,7 @@ dependencies = [
  "num_cpus",
  "omnivanity-chains",
  "omnivanity-crypto",
+ "omnivanity-gpu",
  "omnivanity-pattern",
  "rayon",
  "serde",
