@@ -128,6 +128,18 @@ fn list_chains() -> Vec<ChainInfo> {
                         AddressType::Solana => ("solana", "Solana"),
                         AddressType::P2sh => ("p2sh", "P2SH (3...)"),
                         AddressType::Cosmos => ("cosmos", "Cosmos Bech32"),
+                        AddressType::Tron => ("tron", "TRON"),
+                        AddressType::Xrpl => ("xrpl", "XRP Ledger"),
+                        AddressType::Stellar => ("stellar", "Stellar"),
+                        AddressType::Aptos => ("aptos", "Aptos"),
+                        AddressType::Sui => ("sui", "Sui"),
+                        AddressType::Near => ("near", "NEAR"),
+                        AddressType::Iota => ("iota", "IOTA"),
+                        AddressType::Algorand => ("algorand", "Algorand"),
+                        AddressType::Ss58 => ("ss58", "SS58"),
+                        AddressType::Filecoin => ("filecoin", "Filecoin"),
+                        AddressType::Zilliqa => ("zilliqa", "Zilliqa"),
+                        AddressType::Nano => ("nano", "Nano"),
                     };
                     AddressTypeInfo {
                         id: id.to_string(),

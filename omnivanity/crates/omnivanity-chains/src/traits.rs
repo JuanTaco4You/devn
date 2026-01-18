@@ -31,6 +31,30 @@ pub enum AddressType {
     Solana,
     /// Cosmos-SDK Bech32 (cosmos1..., osmo1..., etc.)
     Cosmos,
+    /// TRON address (T...)
+    Tron,
+    /// XRP Ledger address (r...)
+    Xrpl,
+    /// Stellar StrKey (G...)
+    Stellar,
+    /// Aptos hex address (0x...)
+    Aptos,
+    /// Sui hex address (0x...)
+    Sui,
+    /// NEAR implicit account (64 hex)
+    Near,
+    /// IOTA hex address (0x...)
+    Iota,
+    /// Algorand Base32 address
+    Algorand,
+    /// Polkadot/Substrate SS58 address
+    Ss58,
+    /// Filecoin address (f1...)
+    Filecoin,
+    /// Zilliqa Bech32 (zil1...)
+    Zilliqa,
+    /// Nano address (nano_...)
+    Nano,
 }
 
 impl fmt::Display for AddressType {
@@ -43,6 +67,18 @@ impl fmt::Display for AddressType {
             AddressType::P2tr => write!(f, "P2TR (Taproot)"),
             AddressType::Solana => write!(f, "Solana"),
             AddressType::Cosmos => write!(f, "Cosmos Bech32"),
+            AddressType::Tron => write!(f, "TRON"),
+            AddressType::Xrpl => write!(f, "XRP Ledger"),
+            AddressType::Stellar => write!(f, "Stellar StrKey"),
+            AddressType::Aptos => write!(f, "Aptos"),
+            AddressType::Sui => write!(f, "Sui"),
+            AddressType::Near => write!(f, "NEAR"),
+            AddressType::Iota => write!(f, "IOTA"),
+            AddressType::Algorand => write!(f, "Algorand"),
+            AddressType::Ss58 => write!(f, "SS58"),
+            AddressType::Filecoin => write!(f, "Filecoin"),
+            AddressType::Zilliqa => write!(f, "Zilliqa"),
+            AddressType::Nano => write!(f, "Nano"),
         }
     }
 }

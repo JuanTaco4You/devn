@@ -7,3 +7,7 @@ edition.workspace = true
 omnivanity-crypto = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
+blake2 = "0.10"
+bech32 = { workspace = true }
+sha2 = { workspace = true }
+bs58 = { workspace = true }
