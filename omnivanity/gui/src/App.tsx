@@ -2,10 +2,18 @@ import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
+interface AddressTypeInfo {
+  id: string;
+  name: string;
+  prefix: string;
+  isDefault: boolean;
+}
+
 interface Chain {
   ticker: string;
   name: string;
   prefix: string;
+  addressTypes?: AddressTypeInfo[];
 }
 
 interface SearchResult {
@@ -28,7 +36,12 @@ interface SearchStats {
 
 const CHAINS: Chain[] = [
   { ticker: "ETH", name: "Ethereum", prefix: "0x" },
-  { ticker: "BTC", name: "Bitcoin", prefix: "1/bc1" },
+  {
+    ticker: "BTC", name: "Bitcoin", prefix: "1/bc1", addressTypes: [
+      { id: "legacy", name: "Legacy (1...)", prefix: "1", isDefault: false },
+      { id: "segwit", name: "SegWit (bc1q...)", prefix: "bc1q", isDefault: true },
+    ]
+  },
   { ticker: "SOL", name: "Solana", prefix: "" },
   { ticker: "LTC", name: "Litecoin", prefix: "L/ltc1" },
   { ticker: "DOGE", name: "Dogecoin", prefix: "D" },
@@ -37,6 +50,7 @@ const CHAINS: Chain[] = [
 
 function App() {
   const [selectedChain, setSelectedChain] = useState<Chain>(CHAINS[0]);
+  const [addressType, setAddressType] = useState<string | null>(null);
   const [pattern, setPattern] = useState("");
   const [patternType, setPatternType] = useState<"prefix" | "suffix" | "contains">("prefix");
   const [caseInsensitive, setCaseInsensitive] = useState(false);
@@ -46,6 +60,10 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
 
+  // Get current prefix based on selected address type
+  const currentPrefix = addressType && selectedChain.addressTypes
+    ? selectedChain.addressTypes.find(at => at.id === addressType)?.prefix || selectedChain.prefix
+    : selectedChain.prefix;
   const startSearch = useCallback(async () => {
     if (!pattern.trim()) {
       setError("Please enter a pattern");
@@ -63,6 +81,7 @@ function App() {
         pattern: pattern,
         patternType: patternType,
         caseInsensitive: caseInsensitive,
+        addressType: addressType,
       });
 
       setResult(searchResult);
@@ -71,7 +90,7 @@ function App() {
     } finally {
       setIsSearching(false);
     }
-  }, [selectedChain, pattern, patternType, caseInsensitive]);
+  }, [selectedChain, pattern, patternType, caseInsensitive, addressType]);
 
   const stopSearch = useCallback(async () => {
     try {
@@ -115,11 +134,30 @@ function App() {
           </div>
         </section>
 
+        {/* Address Type Selector (for chains with multiple types) */}
+        {selectedChain.addressTypes && selectedChain.addressTypes.length > 1 && (
+          <section className="card address-type-selector">
+            <h2>Address Type</h2>
+            <div className="radio-group">
+              {selectedChain.addressTypes.map((at) => (
+                <button
+                  key={at.id}
+                  className={`option-btn ${(addressType === at.id || (!addressType && at.isDefault)) ? "active" : ""}`}
+                  onClick={() => setAddressType(at.id)}
+                  disabled={isSearching}
+                >
+                  {at.name}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Pattern Input */}
         <section className="card pattern-section">
           <h2>Vanity Pattern</h2>
           <div className="pattern-input-group">
-            <span className="prefix-hint">{selectedChain.prefix}</span>
+            <span className="prefix-hint">{currentPrefix}</span>
             <input
               type="text"
               className="pattern-input"

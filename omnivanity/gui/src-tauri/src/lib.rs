@@ -3,7 +3,6 @@
 //! Provides Tauri commands for the GUI frontend to interact with the vanity search engine.
 
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use omnivanity_core::{
     VanitySearch, SearchConfig, Pattern, PatternType, 
@@ -26,13 +25,13 @@ pub struct GuiSearchResult {
     pub keys_per_second: f64,
 }
 
-/// Search vanity address
 #[tauri::command]
 async fn search_vanity(
     chain: String,
     pattern: String,
     pattern_type: String,
     case_insensitive: bool,
+    address_type: Option<String>,
 ) -> Result<GuiSearchResult, String> {
     // Reset stop flag
     STOP_FLAG.store(false, Ordering::Relaxed);
@@ -41,7 +40,13 @@ async fn search_vanity(
     let chain_impl = get_chain(&chain)
         .ok_or_else(|| format!("Unknown chain: {}", chain))?;
     
-    let address_type = chain_impl.default_address_type();
+    // Parse address type (default to chain's default)
+    let addr_type = match address_type.as_deref() {
+        Some("legacy") | Some("p2pkh") => AddressType::P2pkh,
+        Some("segwit") | Some("p2wpkh") => AddressType::P2wpkh,
+        Some("taproot") | Some("p2tr") => AddressType::P2tr,
+        _ => chain_impl.default_address_type(),
+    };
     
     // Parse pattern type
     let pat_type = match pattern_type.as_str() {
@@ -59,7 +64,7 @@ async fn search_vanity(
     };
     
     // Validate pattern
-    let valid_chars = chain_impl.valid_address_chars(address_type);
+    let valid_chars = chain_impl.valid_address_chars(addr_type);
     pat.validate(valid_chars)
         .map_err(|e| format!("Invalid pattern: {}", e))?;
     
@@ -74,7 +79,7 @@ async fn search_vanity(
     // Create and run search
     let search = VanitySearch::new(
         chain_impl,
-        address_type,
+        addr_type,
         vec![pat],
         config,
     );
@@ -104,24 +109,53 @@ fn stop_search() {
     STOP_FLAG.store(true, Ordering::Relaxed);
 }
 
-/// List available chains
 #[tauri::command]
 fn list_chains() -> Vec<ChainInfo> {
     omnivanity_core::all_chains()
         .iter()
-        .map(|c| ChainInfo {
-            ticker: c.ticker().to_string(),
-            name: c.name().to_string(),
-            prefix: c.address_prefix(c.default_address_type()).to_string(),
+        .map(|c| {
+            let default_type = c.default_address_type();
+            ChainInfo {
+                ticker: c.ticker().to_string(),
+                name: c.name().to_string(),
+                prefix: c.address_prefix(default_type).to_string(),
+                address_types: c.address_types().into_iter().map(|at| {
+                    let (id, name) = match at {
+                        AddressType::P2pkh => ("legacy", "Legacy (1...)"),
+                        AddressType::P2wpkh => ("segwit", "SegWit (bc1q...)"),
+                        AddressType::P2tr => ("taproot", "Taproot (bc1p...)"),
+                        AddressType::Evm => ("evm", "EVM (0x...)"),
+                        AddressType::Solana => ("solana", "Solana"),
+                        AddressType::P2sh => ("p2sh", "P2SH (3...)"),
+                    };
+                    AddressTypeInfo {
+                        id: id.to_string(),
+                        name: name.to_string(),
+                        prefix: c.address_prefix(at).to_string(),
+                        is_default: at == default_type,
+                    }
+                }).collect(),
+            }
         })
         .collect()
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ChainInfo {
     pub ticker: String,
     pub name: String,
     pub prefix: String,
+    pub address_types: Vec<AddressTypeInfo>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddressTypeInfo {
+    pub id: String,
+    pub name: String,
+    pub prefix: String,
+    pub is_default: bool,
 }
 
 fn format_keys(keys: u64) -> String {
