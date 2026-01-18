@@ -73,6 +73,8 @@ pub enum AddressType {
     Cardano,
     /// Monero address (4...)
     Monero,
+    /// Internet Computer Principal
+    Icp,
 }
 
 impl fmt::Display for AddressType {
@@ -106,6 +108,7 @@ impl fmt::Display for AddressType {
             AddressType::CashAddr => write!(f, "CashAddr"),
             AddressType::Cardano => write!(f, "Cardano"),
             AddressType::Monero => write!(f, "Monero (4...)"),
+            AddressType::Icp => write!(f, "ICP Principal"),
         }
     }
 }

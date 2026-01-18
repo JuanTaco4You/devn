@@ -58,7 +58,9 @@ pub const CRO: EvmChain = EvmChain::new("CRO", "Cronos");
 pub const MNT: EvmChain = EvmChain::new("MNT", "Mantle");
 pub const IMX: EvmChain = EvmChain::new("IMX", "Immutable");
 pub const HYPE: EvmChain = EvmChain::new("HYPE", "Hyperliquid");
-pub const M: EvmChain = EvmChain::new("M", "MemeCore");
+pub const MEMECORE: EvmChain = EvmChain::new("MEMECORE", "MemeCore");
+pub const MONAD: EvmChain = EvmChain::new("MONAD", "Monad");
+pub const IP: EvmChain = EvmChain::new("IP", "Story Protocol");
 
 // EVM Tokens (DeFi)
 pub const LINK: EvmChain = EvmChain::new("LINK", "Chainlink");
@@ -77,11 +79,18 @@ pub const MYX: EvmChain = EvmChain::new("MYX", "MYX Finance");
 pub const LIT: EvmChain = EvmChain::new("LIT", "Lighter");
 
 // EVM Tokens (Stablecoins/Gold)
+pub const USDT_ERC20: EvmChain = EvmChain::new("USDT", "Tether (ERC-20)");
+pub const USDC_ERC20: EvmChain = EvmChain::new("USDC", "USD Coin (ERC-20)");
 pub const USDE: EvmChain = EvmChain::new("USDe", "Ethena USDe");
 pub const DAI: EvmChain = EvmChain::new("DAI", "Dai");
 pub const XAUT: EvmChain = EvmChain::new("XAUt", "Tether Gold");
 pub const PAXG: EvmChain = EvmChain::new("PAXG", "PAX Gold");
 pub const PYUSD: EvmChain = EvmChain::new("PYUSD", "PayPal USD");
+pub const FDUSD: EvmChain = EvmChain::new("FDUSD", "First Digital USD");
+pub const TUSD: EvmChain = EvmChain::new("TUSD", "TrueUSD");
+pub const USDG: EvmChain = EvmChain::new("USDG", "Global Dollar");
+pub const USD1: EvmChain = EvmChain::new("USD1", "World Liberty USD");
+pub const RLUSD_ERC20: EvmChain = EvmChain::new("RLUSD", "Ripple USD (ERC-20)");
 
 // EVM Tokens (Exchange)
 pub const LEO: EvmChain = EvmChain::new("LEO", "UNUS SED LEO");

@@ -55,6 +55,10 @@ pub const PUMP: SolanaChain = SolanaChain::new("PUMP", "Pump.fun");
 pub const JUP: SolanaChain = SolanaChain::new("JUP", "Jupiter");
 pub const RENDER: SolanaChain = SolanaChain::new("RENDER", "Render");
 
+// Solana Tokens (Stablecoins)
+pub const USDT_SPL: SolanaChain = SolanaChain::new("USDT-SPL", "Tether (SPL)");
+pub const USDC_SPL: SolanaChain = SolanaChain::new("USDC-SPL", "USD Coin (SPL)");
+
 // Legacy alias
 pub type Solana = SolanaChain;
 pub const SOLANA: SolanaChain = SOL;

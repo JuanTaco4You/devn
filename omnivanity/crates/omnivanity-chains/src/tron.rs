@@ -10,16 +10,49 @@ use omnivanity_crypto::{
     hex,
 };
 
-/// TRON chain
-pub struct Tron;
+/// TRON-compatible chain with configurable ticker/name
+#[derive(Debug, Clone, Copy)]
+pub struct TronChain {
+    ticker: &'static str,
+    name: &'static str,
+}
 
-impl Chain for Tron {
+impl TronChain {
+    pub const fn new(ticker: &'static str, name: &'static str) -> Self {
+        Self { ticker, name }
+    }
+
+    fn generate_from_keypair(&self, keypair: &Secp256k1Keypair, _address_type: AddressType) -> GeneratedAddress {
+        let private_key = keypair.private_key_bytes();
+        
+        // TRON: Keccak256(uncompressed_pubkey[1..65]) last 20 bytes
+        let pubkey_xy = keypair.public_key_xy();
+        let hash = keccak256(&pubkey_xy);
+        
+        let mut address_bytes = [0u8; 20];
+        address_bytes.copy_from_slice(&hash[12..32]);
+        
+        // TRON address: version byte 0x41 (65) + 20-byte payload, Base58Check encoded
+        let address = base58check_encode(0x41, &address_bytes);
+        
+        GeneratedAddress {
+            address,
+            private_key_hex: hex::encode(private_key),
+            private_key_native: hex::encode(private_key),
+            public_key_hex: hex::encode(keypair.public_key_uncompressed()),
+            chain: self.ticker.to_string(),
+            address_type: AddressType::Tron,
+        }
+    }
+}
+
+impl Chain for TronChain {
     fn ticker(&self) -> &'static str {
-        "TRX"
+        self.ticker
     }
 
     fn name(&self) -> &'static str {
-        "TRON"
+        self.name
     }
 
     fn family(&self) -> ChainFamily {
@@ -58,30 +91,16 @@ impl Chain for Tron {
     }
 }
 
-impl Tron {
-    fn generate_from_keypair(&self, keypair: &Secp256k1Keypair, _address_type: AddressType) -> GeneratedAddress {
-        let private_key = keypair.private_key_bytes();
-        
-        // TRON: Keccak256(uncompressed_pubkey[1..65]) last 20 bytes
-        let pubkey_xy = keypair.public_key_xy();
-        let hash = keccak256(&pubkey_xy);
-        
-        let mut address_bytes = [0u8; 20];
-        address_bytes.copy_from_slice(&hash[12..32]);
-        
-        // TRON address: version byte 0x41 (65) + 20-byte payload, Base58Check encoded
-        let address = base58check_encode(0x41, &address_bytes);
-        
-        GeneratedAddress {
-            address,
-            private_key_hex: hex::encode(private_key),
-            private_key_native: hex::encode(private_key),
-            public_key_hex: hex::encode(keypair.public_key_uncompressed()),
-            chain: "TRX".to_string(),
-            address_type: AddressType::Tron,
-        }
-    }
-}
+// TRON Native
+pub const TRX: TronChain = TronChain::new("TRX", "TRON");
+
+// TRON Tokens (TRC-20)
+pub const USDT_TRC20: TronChain = TronChain::new("USDT-TRC20", "Tether (TRC-20)");
+pub const USDC_TRC20: TronChain = TronChain::new("USDC-TRC20", "USD Coin (TRC-20)");
+pub const USDD: TronChain = TronChain::new("USDD", "USDD");
+
+// Legacy alias
+pub type Tron = TronChain;
 
 #[cfg(test)]
 mod tests {
@@ -89,7 +108,7 @@ mod tests {
 
     #[test]
     fn test_tron_generation() {
-        let trx = Tron;
+        let trx = TRX;
         let addr = trx.generate(AddressType::Tron);
         assert!(addr.address.starts_with("T"));
         assert_eq!(addr.chain, "TRX");
