@@ -12,7 +12,7 @@ pub use device::{GpuDevice, GpuInfo, GpuBackend};
 pub use search::{GpuVanitySearch, GpuSearchConfig, GpuSearchResult};
 
 #[cfg(feature = "wgpu-backend")]
-pub use wgpu_backend::{WgpuEngine, WgpuError, list_wgpu_devices, is_wgpu_available};
+pub use wgpu_backend::{WgpuEngine, WgpuError, MatchType, list_wgpu_devices, is_wgpu_available};
 
 /// Check if GPU acceleration is available
 pub fn is_gpu_available() -> bool {

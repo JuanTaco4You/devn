@@ -65,6 +65,7 @@ function App() {
   const [pattern, setPattern] = useState("");
   const [patternType, setPatternType] = useState<"prefix" | "suffix" | "contains">("prefix");
   const [caseInsensitive, setCaseInsensitive] = useState(false);
+  const [useGpu, setUseGpu] = useState(true); // GPU enabled by default (auto-detect)
   const [isSearching, setIsSearching] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +137,7 @@ function App() {
         patternType: patternType,
         caseInsensitive: caseInsensitive,
         addressType: addressType,
+        useGpu: useGpu,
       });
 
       setResult(searchResult);
@@ -285,6 +287,18 @@ function App() {
                   disabled={isSearching}
                 />
                 Case Insensitive
+              </label>
+            </div>
+
+            <div className="option-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={useGpu}
+                  onChange={(e) => setUseGpu(e.target.checked)}
+                  disabled={isSearching}
+                />
+                🚀 GPU Acceleration
               </label>
             </div>
           </div>

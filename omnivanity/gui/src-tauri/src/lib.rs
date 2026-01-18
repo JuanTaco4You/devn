@@ -32,6 +32,7 @@ async fn search_vanity(
     pattern_type: String,
     case_insensitive: bool,
     address_type: Option<String>,
+    use_gpu: Option<bool>,
 ) -> Result<GuiSearchResult, String> {
     // Reset stop flag
     STOP_FLAG.store(false, Ordering::Relaxed);
@@ -68,12 +69,13 @@ async fn search_vanity(
     pat.validate(valid_chars)
         .map_err(|e| format!("Invalid pattern: {}", e))?;
     
-    // Create search config
+    // Create search config with GPU option (default to true = auto-detect)
     let config = SearchConfig {
         threads: 0, // Auto
         batch_size: 1000,
         max_attempts: 0,
         max_time_secs: 300, // 5 min max for GUI
+        use_gpu: use_gpu.unwrap_or(true),
     };
     
     // Create and run search

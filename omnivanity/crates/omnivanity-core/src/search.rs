@@ -24,6 +24,8 @@ pub struct SearchConfig {
     pub max_attempts: u64,
     /// Maximum time in seconds (0 = unlimited)
     pub max_time_secs: u64,
+    /// Use GPU acceleration if available
+    pub use_gpu: bool,
 }
 
 impl Default for SearchConfig {
@@ -33,6 +35,7 @@ impl Default for SearchConfig {
             batch_size: 1000,
             max_attempts: 0,
             max_time_secs: 0,
+            use_gpu: true, // Auto-enable GPU if available
         }
     }
 }

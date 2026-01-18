@@ -20,6 +20,17 @@ use crate::search::{GpuSearchConfig, GpuSearchResult};
 /// EVM WGSL shader source
 const EVM_SHADER: &str = include_str!("kernels/evm.wgsl");
 
+/// Pattern matching WGSL shader source (generic, works with any chain)
+const PATTERN_MATCH_SHADER: &str = include_str!("kernels/pattern_match.wgsl");
+
+/// Match type enum for pattern matching
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MatchType {
+    Prefix = 0,
+    Suffix = 1,
+    Contains = 2,
+}
+
 /// wgpu GPU Engine
 #[cfg(feature = "wgpu-backend")]
 pub struct WgpuEngine {
@@ -348,6 +359,194 @@ impl WgpuEngine {
         }
         
         None
+    }
+    
+    /// Batch pattern matching on GPU (hybrid mode)
+    /// 
+    /// Takes pre-computed addresses from CPU and finds matches in parallel on GPU.
+    /// This is the Phase 1 hybrid approach that works with ALL chains.
+    pub fn pattern_match_batch(
+        &self,
+        addresses: &[String],
+        pattern: &str,
+        match_type: MatchType,
+        case_insensitive: bool,
+    ) -> Vec<usize> {
+        if addresses.is_empty() || pattern.is_empty() {
+            return vec![];
+        }
+        
+        let num_addresses = addresses.len();
+        let workgroup_size = 256u32;
+        let num_workgroups = ((num_addresses + 255) / 256) as u32;
+        
+        // Compile pattern match shader
+        let shader = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Pattern Match Shader"),
+            source: wgpu::ShaderSource::Wgsl(PATTERN_MATCH_SHADER.into()),
+        });
+        
+        // Pack addresses into buffer (64 bytes per address, padded)
+        let mut address_data: Vec<u8> = Vec::with_capacity(num_addresses * 64);
+        for addr in addresses {
+            let bytes = addr.as_bytes();
+            let mut padded = [0u8; 64];
+            let copy_len = bytes.len().min(64);
+            padded[..copy_len].copy_from_slice(&bytes[..copy_len]);
+            address_data.extend_from_slice(&padded);
+        }
+        
+        let addresses_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Addresses Buffer"),
+            contents: &address_data,
+            usage: BufferUsages::STORAGE,
+        });
+        
+        // Pack pattern into buffer
+        let pattern_bytes = pattern.as_bytes();
+        let mut pattern_data = [0u8; 32];
+        let pattern_len = pattern_bytes.len().min(32);
+        pattern_data[..pattern_len].copy_from_slice(&pattern_bytes[..pattern_len]);
+        
+        let pattern_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Pattern Buffer"),
+            contents: &pattern_data,
+            usage: BufferUsages::STORAGE,
+        });
+        
+        // Params uniform
+        #[repr(C)]
+        #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+        struct MatchParams {
+            pattern_len: u32,
+            match_type: u32,
+            case_insensitive: u32,
+            num_addresses: u32,
+        }
+        
+        let params = MatchParams {
+            pattern_len: pattern_len as u32,
+            match_type: match_type as u32,
+            case_insensitive: if case_insensitive { 1 } else { 0 },
+            num_addresses: num_addresses as u32,
+        };
+        
+        let params_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Match Params Buffer"),
+            contents: bytemuck::bytes_of(&params),
+            usage: BufferUsages::UNIFORM,
+        });
+        
+        // Result buffer
+        #[repr(C)]
+        #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+        struct MatchResultGpu {
+            found: u32,
+            first_match_idx: u32,
+        }
+        
+        let result_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Match Result Buffer"),
+            size: 8,
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+        
+        // Match flags buffer (one u32 per address)
+        let match_flags_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Match Flags Buffer"),
+            size: (num_addresses * 4) as u64,
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+        
+        // Staging buffer for readback
+        let staging_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Staging Buffer"),
+            size: (num_addresses * 4) as u64,
+            usage: BufferUsages::MAP_READ | BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        
+        // Create bind group layout
+        let bind_group_layout = self.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Pattern Match Bind Group Layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                wgpu::BindGroupLayoutEntry { binding: 2, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                wgpu::BindGroupLayoutEntry { binding: 3, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                wgpu::BindGroupLayoutEntry { binding: 4, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
+            ],
+        });
+        
+        let pipeline_layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("Pattern Match Pipeline Layout"),
+            bind_group_layouts: &[&bind_group_layout],
+            push_constant_ranges: &[],
+        });
+        
+        let pipeline = self.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("Pattern Match Pipeline"),
+            layout: Some(&pipeline_layout),
+            module: &shader,
+            entry_point: Some("pattern_match"),
+            compilation_options: Default::default(),
+            cache: None,
+        });
+        
+        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Pattern Match Bind Group"),
+            layout: &bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: pattern_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 1, resource: addresses_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 2, resource: params_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 3, resource: result_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 4, resource: match_flags_buffer.as_entire_binding() },
+            ],
+        });
+        
+        // Dispatch compute shader
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Pattern Match Encoder"),
+        });
+        
+        {
+            let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Pattern Match Pass"),
+                timestamp_writes: None,
+            });
+            cpass.set_pipeline(&pipeline);
+            cpass.set_bind_group(0, &bind_group, &[]);
+            cpass.dispatch_workgroups(num_workgroups, 1, 1);
+        }
+        
+        // Copy results to staging buffer
+        encoder.copy_buffer_to_buffer(&match_flags_buffer, 0, &staging_buffer, 0, (num_addresses * 4) as u64);
+        
+        self.queue.submit(Some(encoder.finish()));
+        
+        // Read back results
+        let buffer_slice = staging_buffer.slice(..);
+        let (sender, receiver) = std::sync::mpsc::channel();
+        buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+            let _ = sender.send(result);
+        });
+        self.device.poll(wgpu::Maintain::Wait);
+        
+        let mut matches = vec![];
+        if receiver.recv().unwrap().is_ok() {
+            let data = buffer_slice.get_mapped_range();
+            let flags: &[u32] = bytemuck::cast_slice(&data);
+            for (i, &flag) in flags.iter().enumerate() {
+                if flag != 0 {
+                    matches.push(i);
+                }
+            }
+        }
+        
+        matches
     }
     
     /// Benchmark GPU keccak throughput
