@@ -29,6 +29,8 @@ pub enum AddressType {
     P2tr,
     /// Solana address (Base58)
     Solana,
+    /// Cosmos-SDK Bech32 (cosmos1..., osmo1..., etc.)
+    Cosmos,
 }
 
 impl fmt::Display for AddressType {
@@ -40,6 +42,7 @@ impl fmt::Display for AddressType {
             AddressType::P2wpkh => write!(f, "P2WPKH (SegWit)"),
             AddressType::P2tr => write!(f, "P2TR (Taproot)"),
             AddressType::Solana => write!(f, "Solana"),
+            AddressType::Cosmos => write!(f, "Cosmos Bech32"),
         }
     }
 }

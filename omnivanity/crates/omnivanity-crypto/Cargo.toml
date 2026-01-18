@@ -15,3 +15,4 @@ hex = { workspace = true }
 rand = { workspace = true }
 rand_core = { workspace = true }
 thiserror = { workspace = true }
+blake2 = "0.10"

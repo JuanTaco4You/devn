@@ -127,6 +127,7 @@ fn list_chains() -> Vec<ChainInfo> {
                         AddressType::Evm => ("evm", "EVM (0x...)"),
                         AddressType::Solana => ("solana", "Solana"),
                         AddressType::P2sh => ("p2sh", "P2SH (3...)"),
+                        AddressType::Cosmos => ("cosmos", "Cosmos Bech32"),
                     };
                     AddressTypeInfo {
                         id: id.to_string(),
