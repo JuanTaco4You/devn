@@ -6,6 +6,7 @@ edition.workspace = true
 [features]
 default = ["gpu"]
 gpu = ["omnivanity-gpu"]
+opencl = ["gpu", "omnivanity-gpu/opencl-backend"]
 
 [dependencies]
 omnivanity-crypto = { workspace = true }
@@ -19,4 +20,5 @@ rayon = { workspace = true }
 crossbeam-channel = { workspace = true }
 tracing = { workspace = true }
 num_cpus = "1.16"
+
 

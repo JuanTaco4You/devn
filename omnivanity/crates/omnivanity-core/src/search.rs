@@ -18,6 +18,12 @@ use crate::stats::SearchStats;
 #[cfg(feature = "gpu")]
 use omnivanity_gpu::{WgpuEngine, MatchType, GpuSearchConfig, is_gpu_available};
 
+// OpenCL Turbo support for Ed25519 chains (optional feature)
+#[cfg(feature = "opencl")]
+use omnivanity_gpu::{OpenClEngine, OpenClSearchConfig, is_opencl_available};
+
+use omnivanity_chains::ChainFamily;
+
 /// Search configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchConfig {
@@ -108,7 +114,16 @@ impl VanitySearch {
 
     /// Run the search (blocking until found or limits reached)
     pub fn run(&self) -> Option<SearchResult> {
-        // Check if GPU should be used
+        // Check for OpenCL Turbo mode (full GPU key gen) for Ed25519 chains
+        #[cfg(feature = "opencl")]
+        {
+            if self.config.use_gpu && self.chain.family() == ChainFamily::Ed25519 && is_opencl_available() {
+                info!("🚀 TURBO MODE: Ed25519 chain detected with OpenCL - using full GPU key generation!");
+                return self.run_opencl_turbo();
+            }
+        }
+        
+        // Check if GPU should be used (hybrid mode for other chains)
         #[cfg(feature = "gpu")]
         {
             if self.config.use_gpu && is_gpu_available() {
@@ -228,7 +243,7 @@ impl VanitySearch {
         
         // Initialize GPU engine
         let gpu_config = GpuSearchConfig::default();
-        let gpu = match WgpuEngine::new_sync(0, gpu_config) {
+        let gpu_engine = match WgpuEngine::new_sync(0, gpu_config) {
             Ok(g) => {
                 info!("GPU initialized: {}", g.device_name());
                 g
@@ -244,25 +259,19 @@ impl VanitySearch {
             .first()
             .map(|p| p.value.clone())
             .unwrap_or_default();
-        let pattern_type = self.matcher.patterns()
-            .first()
-            .map(|p| p.pattern_type)
-            .unwrap_or(PatternType::Prefix);
-        let case_insensitive = self.matcher.patterns()
-            .first()
-            .map(|p| p.case_insensitive)
-            .unwrap_or(false);
-        
-        let match_type = match pattern_type {
+            
+        let pat_obj = self.matcher.patterns().first().unwrap();
+        let match_type = match pat_obj.pattern_type {
             PatternType::Prefix => MatchType::Prefix,
             PatternType::Suffix => MatchType::Suffix,
             PatternType::Contains => MatchType::Contains,
         };
         
         // Batch size for GPU (larger = more GPU utilization)
-        let gpu_batch_size = 8192;
+        let gpu_batch_size = self.config.batch_size;
         let max_time = self.config.max_time_secs;
         let max_attempts = self.config.max_attempts;
+        let start_time = std::time::Instant::now();
         
         // Stats printer thread  
         let stats_for_printer = stats.clone();
@@ -286,56 +295,179 @@ impl VanitySearch {
                 break;
             }
             
-            // Generate batch of addresses on CPU (using rayon)
-            let batch: Vec<GeneratedAddress> = (0..gpu_batch_size)
-                .into_par_iter()
-                .map(|_| self.chain.generate(self.address_type))
-                .collect();
+            // Generate batch of addresses on CPU (using rayon with limited threads)
+            // Optimization: Use generate_address to avoid full string formatting until match found
+            // Use only 75% of CPU cores to avoid maxing out CPU (leave room for GPU driver, system, etc.)
+            let num_cpus = num_cpus::get();
+            let gen_threads = (num_cpus * 3 / 4).max(1); // Use 75% of cores, minimum 1
             
-            // Extract address strings for GPU matching
-            let address_strings: Vec<String> = batch.iter()
-                .map(|a| {
-                    // Strip prefix for matching (e.g., "0x" for EVM)
-                    let prefix = self.chain.address_prefix(self.address_type);
-                    if a.address.starts_with(prefix) && !prefix.is_empty() {
-                        a.address[prefix.len()..].to_string()
-                    } else {
-                        a.address.clone()
-                    }
-                })
-                .collect();
-            
-            // GPU pattern matching
-            let matches = gpu.pattern_match_batch(
+            let (address_strings, keys): (Vec<String>, Vec<Vec<u8>>) = rayon::ThreadPoolBuilder::new()
+                .num_threads(gen_threads)
+                .build()
+                .unwrap()
+                .install(|| {
+                    (0..gpu_batch_size)
+                        .into_par_iter()
+                        .map(|_| self.chain.generate_address(self.address_type))
+                        .unzip()
+                });
+
+            // Run on GPU (should be much faster than CPU generation)
+            let match_indices = gpu_engine.pattern_match_batch(
                 &address_strings,
                 &pattern,
                 match_type,
-                case_insensitive,
+                pat_obj.case_insensitive,
             );
             
-            stats.add_keys(gpu_batch_size as u64);
-            
-            // Check for matches and verify on CPU
-            for match_idx in matches {
-                if let Some(matched_address) = batch.get(match_idx) {
-                    // Double check with CPU matcher to ensure correctness (handles prefixes, etc.)
-                    if self.matcher.matches(&matched_address.address).is_some() {
+            // Process matches
+            for idx in match_indices {
+                if idx >= address_strings.len() {
+                    continue;
+                }
+                
+                let address_str = &address_strings[idx];
+                let private_key = &keys[idx];
+                
+                // Double verification (CPU side)
+                if self.matcher.matches(address_str).is_some() {
+                    // Reconstruct full details for the result
+                    if let Some(r) = self.chain.generate_from_bytes(private_key, self.address_type) {
                         stats.mark_found();
+                        
+                        let total = stats.total_keys();
+                        let elapsed = start_time.elapsed().as_secs_f64();
+                        
                         result = Some(SearchResult {
-                            address: matched_address.clone(),
+                            address: r,
                             pattern: pattern.clone(),
-                            keys_tested: stats.total_keys(),
-                            time_secs: stats.elapsed().as_secs_f64(),
-                            keys_per_second: stats.keys_per_second(),
+                            keys_tested: total,
+                            time_secs: elapsed,
+                            keys_per_second: total as f64 / elapsed,
                         });
                         break;
                     }
                 }
             }
             
+            stats.add_keys(gpu_batch_size as u64);
+            
             if result.is_some() {
                 break;
             }
+        }
+        
+        stats.stop();
+        let _ = printer_handle.join();
+        
+        result
+    }
+
+    /// TURBO MODE: Full GPU key generation for Ed25519 chains (8+ MH/s)
+    #[cfg(feature = "opencl")]
+    fn run_opencl_turbo(&self) -> Option<SearchResult> {
+        let stats = SearchStats::new();
+        let start_time = std::time::Instant::now();
+        
+        // Get pattern info
+        let pattern = self.matcher.patterns()
+            .first()
+            .map(|p| p.value.clone())
+            .unwrap_or_default();
+        
+        let pat_obj = self.matcher.patterns().first().unwrap();
+        let case_sensitive = !pat_obj.case_insensitive;
+        
+        // Determine prefix/suffix from pattern type
+        let (prefix, suffix) = match pat_obj.pattern_type {
+            PatternType::Prefix => (pattern.as_str(), ""),
+            PatternType::Suffix => ("", pattern.as_str()),
+            PatternType::Contains => (pattern.as_str(), ""), // Treat as prefix for now
+        };
+        
+        // Initialize OpenCL engine
+        let opencl_engine = match OpenClEngine::new(0) {
+            Ok(engine) => {
+                let est_speed = engine.estimated_keys_per_second();
+                info!("🚀 OpenCL TURBO initialized: {} (est. {:.1} MH/s)", 
+                    engine.device_info().name,
+                    est_speed as f64 / 1_000_000.0
+                );
+                engine
+            }
+            Err(e) => {
+                info!("OpenCL init failed ({}), falling back to hybrid", e);
+                #[cfg(feature = "gpu")]
+                {
+                    return self.run_gpu_hybrid();
+                }
+                #[cfg(not(feature = "gpu"))]
+                {
+                    return self.run_cpu();
+                }
+            }
+        };
+        
+        // Configure OpenCL search
+        let config = OpenClSearchConfig::default();
+        let max_time = self.config.max_time_secs;
+        let max_attempts = self.config.max_attempts;
+        
+        // Stats printer thread  
+        let stats_for_printer = stats.clone();
+        let difficulty = self.difficulty;
+        let printer_handle = thread::spawn(move || {
+            while stats_for_printer.is_running() {
+                eprint!("\r{} 🚀TURBO", stats_for_printer.format(difficulty));
+                thread::sleep(Duration::from_millis(250));
+            }
+            eprintln!();
+        });
+        
+        let mut result: Option<SearchResult> = None;
+        let keys_per_iteration = config.global_work_size as u64;
+        
+        while stats.is_running() {
+            // Check limits
+            if max_attempts > 0 && stats.total_keys() >= max_attempts {
+                break;
+            }
+            if max_time > 0 && stats.elapsed().as_secs() >= max_time {
+                break;
+            }
+            
+            // Run full GPU search iteration
+            match opencl_engine.search_ed25519(prefix, suffix, case_sensitive, &config) {
+                Ok(Some(private_key)) => {
+                    // Found a match! Generate full address details
+                    if let Some(addr) = self.chain.generate_from_bytes(&private_key, self.address_type) {
+                        // Verify match on CPU (sanity check)
+                        if self.matcher.matches(&addr.address).is_some() {
+                            stats.mark_found();
+                            let total = stats.total_keys();
+                            let elapsed = start_time.elapsed().as_secs_f64();
+                            
+                            result = Some(SearchResult {
+                                address: addr,
+                                pattern: pattern.clone(),
+                                keys_tested: total,
+                                time_secs: elapsed,
+                                keys_per_second: total as f64 / elapsed,
+                            });
+                            break;
+                        }
+                    }
+                }
+                Ok(None) => {
+                    // No match this iteration, continue
+                }
+                Err(e) => {
+                    info!("OpenCL error: {}, stopping search", e);
+                    break;
+                }
+            }
+            
+            stats.add_keys(keys_per_iteration);
         }
         
         stats.stop();

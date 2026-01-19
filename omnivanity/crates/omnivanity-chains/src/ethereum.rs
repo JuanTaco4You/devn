@@ -162,6 +162,18 @@ impl Chain for EvmChain {
     fn address_prefix(&self, _address_type: AddressType) -> &'static str {
         "0x"
     }
+
+    fn generate_address(&self, _address_type: AddressType) -> (String, Vec<u8>) {
+        let keypair = Secp256k1Keypair::generate();
+        let pubkey_xy = keypair.public_key_xy();
+        let hash = keccak256(&pubkey_xy);
+        
+        let mut address_bytes = [0u8; 20];
+        address_bytes.copy_from_slice(&hash[12..32]);
+        
+        let address = eip55_checksum(&address_bytes);
+        (address, keypair.private_key_bytes().to_vec())
+    }
 }
 
 #[cfg(test)]

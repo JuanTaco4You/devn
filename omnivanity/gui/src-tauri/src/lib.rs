@@ -9,8 +9,30 @@ use omnivanity_core::{
     AddressType, get_chain,
 };
 
+use tauri::{AppHandle, Emitter};
+
 // Global stop flag for cancellation
 static STOP_FLAG: AtomicBool = AtomicBool::new(false);
+
+/// Real-time search statistics event
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SearchStatsEvent {
+    keys_tested: String,
+    keys_per_second: f64,
+    keys_per_second_fmt: String,
+    probability_percent: f64,
+    est_time_50_percent: String,
+}
+
+/// Log message event
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SearchLogEvent {
+    timestamp: String,
+    level: String, // "info", "success", "error"
+    message: String,
+}
 
 /// Search result for GUI
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,15 +49,24 @@ pub struct GuiSearchResult {
 
 #[tauri::command]
 async fn search_vanity(
+    app: AppHandle,
     chain: String,
     pattern: String,
     pattern_type: String,
     case_insensitive: bool,
     address_type: Option<String>,
     use_gpu: Option<bool>,
+    batch_size: Option<u32>,
 ) -> Result<GuiSearchResult, String> {
     // Reset stop flag
     STOP_FLAG.store(false, Ordering::Relaxed);
+    
+    // Emit initial log
+    let _ = app.emit("search-log", SearchLogEvent {
+        timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+        level: "info".to_string(),
+        message: format!("Starting search for '{}' on {}...", pattern, chain),
+    });
     
     // Get chain
     let chain_impl = get_chain(&chain)
@@ -66,15 +97,24 @@ async fn search_vanity(
     
     // Validate pattern
     let valid_chars = chain_impl.valid_address_chars(addr_type);
-    pat.validate(valid_chars)
-        .map_err(|e| format!("Invalid pattern: {}", e))?;
+    if let Err(e) = pat.validate(valid_chars) {
+        let msg = format!("Invalid pattern: {}", e);
+        let _ = app.emit("search-log", SearchLogEvent {
+            timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+            level: "error".to_string(),
+            message: msg.clone(),
+        });
+        return Err(msg);
+    }
     
-    // Create search config with GPU option (default to true = auto-detect)
+    // Create search config
     let config = SearchConfig {
         threads: 0, // Auto
-        batch_size: 1000,
+        // Massive batch size for GPU mode to keep GPU saturated
+        // CPU will generate in parallel while GPU processes previous batch
+        batch_size: batch_size.unwrap_or(524288) as usize, // 512K default (was 65K)
         max_attempts: 0,
-        max_time_secs: 300, // 5 min max for GUI
+        max_time_secs: 0, // No limit
         use_gpu: use_gpu.unwrap_or(true),
     };
     
@@ -86,22 +126,85 @@ async fn search_vanity(
         config,
     );
     
-    // Run search in blocking task
+    let difficulty = search.difficulty();
+    
+    // Clone app handle for the blocking task
+    let app_handle = app.clone();
+
+    // Run search in blocking task with callback
     let result = tokio::task::spawn_blocking(move || {
-        search.run()
+        search.run_with_callback(|stats| {
+            // Check stop flag
+            if STOP_FLAG.load(Ordering::Relaxed) {
+                stats.stop();
+                return;
+            }
+            
+            // Calculate stats
+            let kps = stats.keys_per_second();
+            let keys = stats.total_keys();
+            
+            // Prob calculation
+            let prob = if difficulty > 0.0 {
+                1.0 - (-1.0 * keys as f64 / difficulty).exp()
+            } else {
+                0.0
+            };
+
+            // ETA 50%
+            let remaining_time = if prob < 0.5 && kps > 0.0 {
+                let keys_needed = (0.5_f64.ln() / (-1.0 / difficulty)) - keys as f64;
+                if keys_needed > 0.0 {
+                    format_duration(keys_needed / kps)
+                } else {
+                    "very soon".to_string()
+                }
+            } else if prob >= 0.5 {
+                "any moment".to_string()
+            } else {
+                "calculating...".to_string()
+            };
+
+            let _ = app_handle.emit("search-stats", SearchStatsEvent {
+                keys_tested: format_keys(keys),
+                keys_per_second: kps,
+                keys_per_second_fmt: format!("{} keys/s", format_keys_short(kps as u64)),
+                probability_percent: prob * 100.0,
+                est_time_50_percent: remaining_time,
+            });
+        })
     }).await.map_err(|e| format!("Search task failed: {}", e))?;
     
     match result {
-        Some(r) => Ok(GuiSearchResult {
-            address: r.address.address,
-            private_key_hex: r.address.private_key_hex,
-            private_key_native: r.address.private_key_native,
-            public_key_hex: r.address.public_key_hex,
-            keys_tested_formatted: format_keys(r.keys_tested),
-            time_secs: r.time_secs,
-            keys_per_second: r.keys_per_second,
-        }),
-        None => Err("No match found within time limit".to_string()),
+        Some(r) => {
+            let _ = app.emit("search-log", SearchLogEvent {
+                timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                level: "success".to_string(),
+                message: format!("✅ Found match! {}...", &r.address.address[0..std::cmp::min(10, r.address.address.len())]),
+            });
+            Ok(GuiSearchResult {
+                address: r.address.address,
+                private_key_hex: r.address.private_key_hex,
+                private_key_native: r.address.private_key_native,
+                public_key_hex: r.address.public_key_hex,
+                keys_tested_formatted: format_keys(r.keys_tested),
+                time_secs: r.time_secs,
+                keys_per_second: r.keys_per_second,
+            })
+        },
+        None => {
+            let msg = if STOP_FLAG.load(Ordering::Relaxed) {
+                "Search stopped by user"
+            } else {
+                "No match found within limits"
+            };
+            let _ = app.emit("search-log", SearchLogEvent {
+                timestamp: chrono::Local::now().format("%H:%M:%S").to_string(),
+                level: "info".to_string(),
+                message: msg.to_string(),
+            });
+            Err(msg.to_string())
+        },
     }
 }
 
@@ -192,6 +295,35 @@ fn format_keys(keys: u64) -> String {
         format!("{:.1}K", keys as f64 / 1e3)
     } else {
         format!("{}", keys)
+    }
+}
+
+fn format_keys_short(keys: u64) -> String {
+    if keys >= 1_000_000_000 {
+        format!("{:.1}B", keys as f64 / 1e9)
+    } else if keys >= 1_000_000 {
+        format!("{:.1}M", keys as f64 / 1e6)
+    } else if keys >= 1000 {
+        format!("{:.1}K", keys as f64 / 1e3)
+    } else {
+        format!("{}", keys)
+    }
+}
+
+fn format_duration(seconds: f64) -> String {
+    if seconds <= 0.0 {
+        return "now".to_string();
+    }
+    if seconds < 1.0 {
+        format!("{:.0}ms", seconds * 1000.0)
+    } else if seconds < 60.0 {
+        format!("{:.0}s", seconds)
+    } else if seconds < 3600.0 {
+        format!("{:.0}m", seconds / 60.0)
+    } else if seconds < 86400.0 {
+        format!("{:.1}h", seconds / 3600.0)
+    } else {
+        format!("{:.1}d", seconds / 86400.0)
     }
 }
 

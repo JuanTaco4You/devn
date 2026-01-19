@@ -1,0 +1,460 @@
+﻿cargo :    Compiling 
+ocl-core v0.11.5
+At line:1 char:1
++ cargo check -p gui 
+2>&1
++ ~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (   Compili   
+ ng ocl-core v0.11    
+.5:String) [], Re    
+moteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+warning: unused 
+import: 
+`ecdsa::SigningKey`
+ --> crates\omnivanity
+-crypto\src\secp256k1.
+rs:4:5
+  |
+4 |     
+ecdsa::SigningKey,
+  |     
+^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unus
+ed_imports)]` (part 
+of `#[warn(unused)]`) 
+on by default
+warning: unused 
+import: `VerifyingKey`
+ --> crates\omnivanity
+-crypto\src\ed25519.rs
+:3:33
+  |
+3 | ...y, 
+VerifyingKey};
+  |       ^^^^^^^^^^^^
+warning: unused 
+import: `curve25519_da
+lek::edwards::EdwardsP
+oint`
+ --> crates\omnivanity
+-crypto\src\monero.rs:
+8:5
+  |
+8 | use curve25519_dal
+ek::edwards::EdwardsPo
+int;
+  |     ^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^
+warning: unused 
+import: `Keccak256`
+ --> crates\omnivanity
+-crypto\src\monero.rs:
+9:12
+  |
+9 | 
+...a3::{Keccak256, 
+Dig...
+  |         ^^^^^^^^^
+warning: unused 
+import: 
+`std::ops::Mul`
+  --> crates\omnivanit
+y-crypto\src\monero.rs
+:10:5
+   |
+10 | use 
+std::ops::Mul;
+   |     ^^^^^^^^^^^^^
+warning: unused 
+import: `Digest`
+ --> crates\omnivanity
+-crypto\src\monero.rs:
+9:23
+  |
+9 | ...k256, Digest}; 
+// M...
+  |          ^^^^^^
+warning: unused 
+import: `super`
+  --> crates\omnivanit
+y-crypto\src\monero.rs
+:27:9
+   |
+27 |     use super::*;
+   |         ^^^^^
+warning: 
+`omnivanity-crypto` 
+(lib) generated 7 
+warnings (run `cargo 
+fix --lib -p 
+omnivanity-crypto` to 
+apply 5 suggestions)
+    Checking 
+omnivanity-chains 
+v0.1.0 (C:\Users\Big B
+\OneDrive\Desktop\Desk
+top Shit\Everything 
+Everything\Everything 
+AntiGravity\devn\omniv
+anity\crates\omnivanit
+y-chains)
+warning: function 
+`format_difficulty` 
+is never used
+  --> crates\omnivanit
+y-pattern\src\difficul
+ty.rs:55:8
+   |
+55 | ...fn format_diff
+iculty(di...
+   |       
+^^^^^^^^^^^^^^^^^
+   |
+   = note: 
+`#[warn(dead_code)]` 
+(part of 
+`#[warn(unused)]`) on 
+by default
+warning: function 
+`estimate_time_50pct` 
+is never used
+  --> crates\omnivanit
+y-pattern\src\difficul
+ty.rs:72:8
+   |
+72 | ...fn estimate_ti
+me_50pct(di...
+   |       
+^^^^^^^^^^^^^^^^^^^
+warning: function 
+`format_duration` is 
+never used
+  --> crates\omnivanit
+y-pattern\src\difficul
+ty.rs:80:8
+   |
+80 | ...fn 
+format_duration(se...
+   |       
+^^^^^^^^^^^^^^^
+warning: 
+`omnivanity-pattern` 
+(lib) generated 3 
+warnings
+    Checking chrono 
+v0.4.43
+warning: unused 
+import: `encoding::bas
+e58check_encode`
+ --> crates\omnivanity
+-chains\src\zcash.rs:7
+:5
+  |
+7 |     encoding::base
+58check_encode,
+  |     ^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unus
+ed_imports)]` (part 
+of `#[warn(unused)]`) 
+on by default
+warning: unused 
+import: `std::collecti
+ons::HashMap`
+  --> crates\omnivanit
+y-chains\src\ton.rs:29
+:9
+   |
+29 |     use std::coll
+ections::HashMap;
+   |         ^^^^^^^^^
+^^^^^^^^^^^^^^^^
+warning: constant 
+`LTC_P2SH_VERSION` is 
+never used
+  --> crates\omnivanit
+y-chains\src\litecoin.
+rs:16:7
+   |
+16 | const 
+LTC_P2SH_VERSION: u8 
+= 0x32;  // M prefix 
+(or 0x05 for 3 prefix)
+   |       
+^^^^^^^^^^^^^^^^
+   |
+   = note: 
+`#[warn(dead_code)]` 
+(part of 
+`#[warn(unused)]`) on 
+by default
+warning: constant 
+`DOGE_P2SH_VERSION` 
+is never used
+  --> crates\omnivanit
+y-chains\src\dogecoin.
+rs:16:7
+   |
+16 | const 
+DOGE_P2SH_VERSION: u8 
+= 0x16;  // 9 or A 
+prefix
+   |       
+^^^^^^^^^^^^^^^^^
+warning: 
+`omnivanity-chains` 
+(lib) generated 4 
+warnings (run `cargo 
+fix --lib -p 
+omnivanity-chains` to 
+apply 2 suggestions)
+    Checking ocl 
+v0.19.7
+    Checking 
+omnivanity-gpu v0.1.0 
+(C:\Users\Big B\OneDri
+ve\Desktop\Desktop 
+Shit\Everything 
+Everything\Everything 
+AntiGravity\devn\omniv
+anity\crates\omnivanit
+y-gpu)
+warning: unused 
+imports: `Adapter`, 
+`BindGroupLayout`, 
+`BindGroup`, 
+`Buffer`, 
+`ComputePipeline`, 
+and `ShaderModule`
+ --> crates\omnivanity
+-gpu\src\wgpu_backend.
+rs:8:5
+  |
+8 |     Adapter, 
+Device, Queue, 
+ShaderModule, 
+ComputePipeline, 
+  |     ^^^^^^^       
+          
+^^^^^^^^^^^^  
+^^^^^^^^^^^^^^^
+9 |     Buffer, 
+BufferUsages, 
+BindGroup, 
+BindGroupLayout,
+  |     ^^^^^^        
+        ^^^^^^^^^  
+^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unus
+ed_imports)]` (part 
+of `#[warn(unused)]`) 
+on by default
+warning: unused 
+import: `warn`
+  --> crates\omnivanit
+y-gpu\src\wgpu_backend
+.rs:15:21
+   |
+15 | use 
+tracing::{info, warn, 
+debug};
+   |                  
+   ^^^^
+warning: unused 
+import: `GpuInfo`
+  --> crates\omnivanit
+y-gpu\src\wgpu_backend
+.rs:17:44
+   |
+17 | use crate::device
+::{GpuDevice, 
+GpuBackend, GpuInfo};
+   |                  
+                      
+    ^^^^^^^
+warning: unused 
+variable: 
+`workgroup_size`
+   --> crates\omnivani
+ty-gpu\src\wgpu_backen
+d.rs:380:13
+    |
+380 |         let 
+workgroup_size = 
+256u32;
+    |             
+^^^^^^^^^^^^^^ help: 
+if this is 
+intentional, prefix 
+it with an 
+underscore: 
+`_workgroup_size`
+    |
+    = note: `#[warn(un
+used_variables)]` 
+(part of 
+`#[warn(unused)]`) on 
+by default
+warning: field 
+`context` is never 
+read
+  --> crates\omnivanit
+y-gpu\src\opencl_backe
+nd.rs:72:5
+   |
+71 | pub struct 
+OpenClEngine {
+   |            
+------------ field in 
+this struct
+72 |     context: 
+Context,
+   |     ^^^^^^^
+   |
+   = note: 
+`#[warn(dead_code)]` 
+(part of 
+`#[warn(unused)]`) on 
+by default
+warning: 
+`omnivanity-gpu` 
+(lib) generated 5 
+warnings (run `cargo 
+fix --lib -p 
+omnivanity-gpu` to 
+apply 4 suggestions)
+    Checking 
+omnivanity-core 
+v0.1.0 (C:\Users\Big B
+\OneDrive\Desktop\Desk
+top Shit\Everything 
+Everything\Everything 
+AntiGravity\devn\omniv
+anity\crates\omnivanit
+y-core)
+warning: unused 
+import: 
+`std::sync::Arc`
+ --> crates\omnivanity
+-core\src\search.rs:3:
+5
+  |
+3 | use 
+std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unus
+ed_imports)]` (part 
+of `#[warn(unused)]`) 
+on by default
+warning: value 
+assigned to 
+`local_count` is 
+never read
+   --> crates\omnivani
+ty-core\src\search.rs:
+201:25
+    |
+201 |                 
+        local_count 
++= 1;
+    |                 
+        
+^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it 
+is overwritten before 
+being read?
+    = note: `#[warn(un
+used_assignments)]` 
+(part of 
+`#[warn(unused)]`) on 
+by default
+warning: unused 
+variable: 
+`stats_clone`
+   --> crates\omnivani
+ty-core\src\search.rs:
+485:13
+    |
+485 |         let 
+stats_clone = 
+stats.clone();
+    |             
+^^^^^^^^^^^ help: if 
+this is intentional, 
+prefix it with an 
+underscore: 
+`_stats_clone`
+    |
+    = note: `#[warn(un
+used_variables)]` 
+(part of 
+`#[warn(unused)]`) on 
+by default
+warning: unused 
+variable: `elapsed`
+  --> crates\omnivanit
+y-core\src\stats.rs:81
+:13
+   |
+81 |         let 
+elapsed = self.elapsed
+().as_secs_f64();
+   |             
+^^^^^^^ help: if this 
+is intentional, 
+prefix it with an 
+underscore: `_elapsed`
+warning: 
+`omnivanity-core` 
+(lib) generated 4 
+warnings (run `cargo 
+fix --lib -p 
+omnivanity-core` to 
+apply 3 suggestions)
+    Checking gui 
+v0.1.0 (C:\Users\Big B
+\OneDrive\Desktop\Desk
+top Shit\Everything 
+Everything\Everything 
+AntiGravity\devn\omniv
+anity\gui\src-tauri)
+warning: variable 
+does not need to be 
+mutable
+  --> gui\src-tauri\sr
+c\lib.rs:92:9
+   |
+92 |     let mut pat 
+= Pattern {
+   |         ----^^^
+   |         |
+   |         help: 
+remove this `mut`
+   |
+   = note: 
+`#[warn(unused_mut)]` 
+(part of 
+`#[warn(unused)]`) on 
+by default
+warning: `gui` (lib) 
+generated 1 warning 
+(run `cargo fix --lib 
+-p gui` to apply 1 
+suggestion)
+    Finished `dev` 
+profile [unoptimized 
++ debuginfo] 
+target(s) in 1m 00s

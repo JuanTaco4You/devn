@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use omnivanity_crypto::hex;
 
 /// Chain family categorization
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -158,4 +159,17 @@ pub trait Chain: Send + Sync {
     
     /// Get the address prefix (e.g., "0x", "1", "bc1q")
     fn address_prefix(&self, address_type: AddressType) -> &'static str;
+
+    /// Generate only the address string and private key bytes (optimized for search)
+    /// Returns (address, private_key_bytes)
+    fn generate_address(&self, address_type: AddressType) -> (String, Vec<u8>) {
+        // Default implementation falls back to full generation (slow)
+        let gen = self.generate(address_type);
+        let bytes = if let Ok(b) = hex::decode(&gen.private_key_hex) {
+            b
+        } else {
+            vec![] // Should not happen for valid impls
+        };
+        (gen.address, bytes)
+    }
 }

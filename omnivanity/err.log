@@ -1,0 +1,193 @@
+    Checking crossbeam-queue v0.3.12
+warning: unused import: `ecdsa::SigningKey`
+ --> crates\omnivanity-crypto\src\secp256k1.rs:4:5
+  |
+4 |     ecdsa::SigningKey,
+  |     ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `VerifyingKey`
+ --> crates\omnivanity-crypto\src\ed25519.rs:3:33
+  |
+3 | ...y, VerifyingKey};
+  |       ^^^^^^^^^^^^
+
+warning: unused import: `curve25519_dalek::edwards::EdwardsPoint`
+ --> crates\omnivanity-crypto\src\monero.rs:8:5
+  |
+8 | use curve25519_dalek::edwards::EdwardsPoint;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Keccak256`
+ --> crates\omnivanity-crypto\src\monero.rs:9:12
+  |
+9 | ...a3::{Keccak256, Dig...
+  |         ^^^^^^^^^
+
+warning: unused import: `std::ops::Mul`
+  --> crates\omnivanity-crypto\src\monero.rs:10:5
+   |
+10 | use std::ops::Mul;
+   |     ^^^^^^^^^^^^^
+
+warning: unused import: `Digest`
+ --> crates\omnivanity-crypto\src\monero.rs:9:23
+  |
+9 | ...k256, Digest}; // M...
+  |          ^^^^^^
+
+warning: unused import: `super`
+  --> crates\omnivanity-crypto\src\monero.rs:27:9
+   |
+27 |     use super::*;
+   |         ^^^^^
+
+warning: `omnivanity-crypto` (lib) generated 7 warnings (run `cargo fix --lib -p omnivanity-crypto` to apply 5 suggestions)
+warning: unused import: `encoding::base58check_encode`
+ --> crates\omnivanity-chains\src\zcash.rs:7:5
+  |
+7 |     encoding::base58check_encode,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::collections::HashMap`
+  --> crates\omnivanity-chains\src\ton.rs:29:9
+   |
+29 |     use std::collections::HashMap;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `LTC_P2SH_VERSION` is never used
+  --> crates\omnivanity-chains\src\litecoin.rs:16:7
+   |
+16 | const LTC_P2SH_VERSION: u8 = 0x32;  // M prefix (or 0x05 for 3 prefix)
+   |       ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `DOGE_P2SH_VERSION` is never used
+  --> crates\omnivanity-chains\src\dogecoin.rs:16:7
+   |
+16 | const DOGE_P2SH_VERSION: u8 = 0x16;  // 9 or A prefix
+   |       ^^^^^^^^^^^^^^^^^
+
+warning: function `format_difficulty` is never used
+  --> crates\omnivanity-pattern\src\difficulty.rs:55:8
+   |
+55 | ...fn format_difficulty(di...
+   |       ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `estimate_time_50pct` is never used
+  --> crates\omnivanity-pattern\src\difficulty.rs:72:8
+   |
+72 | ...fn estimate_time_50pct(di...
+   |       ^^^^^^^^^^^^^^^^^^^
+
+warning: function `format_duration` is never used
+  --> crates\omnivanity-pattern\src\difficulty.rs:80:8
+   |
+80 | ...fn format_duration(se...
+   |       ^^^^^^^^^^^^^^^
+
+warning: `omnivanity-chains` (lib) generated 4 warnings (run `cargo fix --lib -p omnivanity-chains` to apply 2 suggestions)
+warning: `omnivanity-pattern` (lib) generated 3 warnings
+    Checking crossbeam v0.8.4
+    Checking qutex v0.2.6
+    Checking ocl v0.19.7
+    Checking omnivanity-gpu v0.1.0 (C:\Users\Big B\OneDrive\Desktop\Desktop Shit\Everything Everything\Everything AntiGravity\devn\omnivanity\crates\omnivanity-gpu)
+warning: unused imports: `Adapter`, `BindGroupLayout`, `BindGroup`, `Buffer`, `ComputePipeline`, and `ShaderModule`
+ --> crates\omnivanity-gpu\src\wgpu_backend.rs:8:5
+  |
+8 |     Adapter, Device, Queue, ShaderModule, ComputePipeline, 
+  |     ^^^^^^^                 ^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+9 |     Buffer, BufferUsages, BindGroup, BindGroupLayout,
+  |     ^^^^^^                ^^^^^^^^^  ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `warn`
+  --> crates\omnivanity-gpu\src\wgpu_backend.rs:15:21
+   |
+15 | use tracing::{info, warn, debug};
+   |                     ^^^^
+
+warning: unused import: `GpuInfo`
+  --> crates\omnivanity-gpu\src\wgpu_backend.rs:17:44
+   |
+17 | use crate::device::{GpuDevice, GpuBackend, GpuInfo};
+   |                                            ^^^^^^^
+
+warning: unused variable: `workgroup_size`
+   --> crates\omnivanity-gpu\src\wgpu_backend.rs:380:13
+    |
+380 |         let workgroup_size = 256u32;
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_workgroup_size`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `prefix`
+   --> crates\omnivanity-gpu\src\opencl_backend.rs:160:9
+    |
+160 |         prefix: &str,
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_prefix`
+
+warning: unused variable: `suffix`
+   --> crates\omnivanity-gpu\src\opencl_backend.rs:161:9
+    |
+161 |         suffix: &str,
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_suffix`
+
+warning: unused variable: `case_sensitive`
+   --> crates\omnivanity-gpu\src\opencl_backend.rs:162:9
+    |
+162 |         case_sensitive: bool,
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_case_sensitive`
+
+warning: field `context` is never read
+  --> crates\omnivanity-gpu\src\opencl_backend.rs:71:5
+   |
+70 | pub struct OpenClEngine {
+   |            ------------ field in this struct
+71 |     context: Context,
+   |     ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `omnivanity-gpu` (lib) generated 8 warnings (run `cargo fix --lib -p omnivanity-gpu` to apply 7 suggestions)
+    Checking omnivanity-core v0.1.0 (C:\Users\Big B\OneDrive\Desktop\Desktop Shit\Everything Everything\Everything AntiGravity\devn\omnivanity\crates\omnivanity-core)
+warning: unused import: `std::sync::Arc`
+ --> crates\omnivanity-core\src\search.rs:3:5
+  |
+3 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `local_count` is never read
+   --> crates\omnivanity-core\src\search.rs:201:25
+    |
+201 |                         local_count += 1;
+    |                         ^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `stats_clone`
+   --> crates\omnivanity-core\src\search.rs:485:13
+    |
+485 |         let stats_clone = stats.clone();
+    |             ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_stats_clone`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `elapsed`
+  --> crates\omnivanity-core\src\stats.rs:81:13
+   |
+81 |         let elapsed = self.elapsed().as_secs_f64();
+   |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_elapsed`
+
+warning: `omnivanity-core` (lib) generated 4 warnings (run `cargo fix --lib -p omnivanity-core` to apply 3 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.54s

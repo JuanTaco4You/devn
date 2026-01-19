@@ -1,0 +1,197 @@
+warning: unused import: `ecdsa::SigningKey`
+ --> crates\omnivanity-crypto\src\secp256k1.rs:4:5
+  |
+4 |     ecdsa::SigningKey,
+  |     ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `VerifyingKey`
+ --> crates\omnivanity-crypto\src\ed25519.rs:3:33
+  |
+3 | ...y, VerifyingKey};
+  |       ^^^^^^^^^^^^
+
+warning: unused import: `curve25519_dalek::edwards::EdwardsPoint`
+ --> crates\omnivanity-crypto\src\monero.rs:8:5
+  |
+8 | use curve25519_dalek::edwards::EdwardsPoint;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Keccak256`
+ --> crates\omnivanity-crypto\src\monero.rs:9:12
+  |
+9 | ...a3::{Keccak256, Dig...
+  |         ^^^^^^^^^
+
+warning: unused import: `std::ops::Mul`
+  --> crates\omnivanity-crypto\src\monero.rs:10:5
+   |
+10 | use std::ops::Mul;
+   |     ^^^^^^^^^^^^^
+
+warning: unused import: `Digest`
+ --> crates\omnivanity-crypto\src\monero.rs:9:23
+  |
+9 | ...k256, Digest}; // M...
+  |          ^^^^^^
+
+warning: unused import: `super`
+  --> crates\omnivanity-crypto\src\monero.rs:27:9
+   |
+27 |     use super::*;
+   |         ^^^^^
+
+warning: `omnivanity-crypto` (lib) generated 7 warnings (run `cargo fix --lib -p omnivanity-crypto` to apply 5 suggestions)
+warning: unused import: `encoding::base58check_encode`
+ --> crates\omnivanity-chains\src\zcash.rs:7:5
+  |
+7 |     encoding::base58check_encode,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::collections::HashMap`
+  --> crates\omnivanity-chains\src\ton.rs:29:9
+   |
+29 | ...se std::collections::HashMap;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `LTC_P2SH_VERSION` is never used
+  --> crates\omnivanity-chains\src\litecoin.rs:16:7
+   |
+16 | const LTC_P2SH_VERSION: u...
+   |       ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `DOGE_P2SH_VERSION` is never used
+  --> crates\omnivanity-chains\src\dogecoin.rs:16:7
+   |
+16 | const DOGE_P2SH_VERSION: u...
+   |       ^^^^^^^^^^^^^^^^^
+
+warning: `omnivanity-chains` (lib) generated 4 warnings (run `cargo fix --lib -p omnivanity-chains` to apply 2 suggestions)
+warning: function `format_difficulty` is never used
+  --> crates\omnivanity-pattern\src\difficulty.rs:55:8
+   |
+55 | ...fn format_difficulty(di...
+   |       ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `estimate_time_50pct` is never used
+  --> crates\omnivanity-pattern\src\difficulty.rs:72:8
+   |
+72 | ...fn estimate_time_50pct(di...
+   |       ^^^^^^^^^^^^^^^^^^^
+
+warning: function `format_duration` is never used
+  --> crates\omnivanity-pattern\src\difficulty.rs:80:8
+   |
+80 | ...fn format_duration(se...
+   |       ^^^^^^^^^^^^^^^
+
+warning: `omnivanity-pattern` (lib) generated 3 warnings
+warning: unused imports: `Adapter`, `BindGroupLayout`, `BindGroup`, `Buffer`, `ComputePipeline`, and `ShaderModule`
+ --> crates\omnivanity-gpu\src\wgpu_backend.rs:8:5
+  |
+8 |     Adapter, Device, Queue, ShaderModule, ComputePipeline, 
+  |     ^^^^^^^                 ^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+9 |     Buffer, BufferUsages, BindGroup, BindGroupLayout,
+  |     ^^^^^^                ^^^^^^^^^  ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `warn`
+  --> crates\omnivanity-gpu\src\wgpu_backend.rs:15:21
+   |
+15 | ...o, warn, de...
+   |       ^^^^
+
+warning: unused import: `GpuInfo`
+  --> crates\omnivanity-gpu\src\wgpu_backend.rs:17:44
+   |
+17 | ...d, GpuInfo};
+   |       ^^^^^^^
+
+warning: unused variable: `workgroup_size`
+   --> crates\omnivanity-gpu\src\wgpu_backend.rs:380:13
+    |
+380 | ...et workgroup_size = ...
+    |       ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_workgroup_size`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `omnivanity-gpu` (lib) generated 4 warnings (run `cargo fix --lib -p omnivanity-gpu` to apply 4 suggestions)
+warning: unused import: `std::sync::Arc`
+ --> crates\omnivanity-core\src\search.rs:3:5
+  |
+3 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `local_count` is never read
+   --> crates\omnivanity-core\src\search.rs:186:25
+    |
+186 | ...   local_count += 1;
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `stats_clone`
+   --> crates\omnivanity-core\src\search.rs:353:13
+    |
+353 | ...et stats_clone = ...
+    |       ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_stats_clone`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `elapsed`
+  --> crates\omnivanity-core\src\stats.rs:81:13
+   |
+81 | ...et elapsed = ...
+   |       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_elapsed`
+
+warning: `omnivanity-core` (lib) generated 4 warnings (run `cargo fix --lib -p omnivanity-core` to apply 3 suggestions)
+    Checking gui v0.1.0 (C:\Users\Big B\OneDrive\Desktop\Desktop Shit\Everything Everything\Everything AntiGravity\devn\omnivanity\gui\src-tauri)
+warning: variable does not need to be mutable
+  --> gui\src-tauri\src\lib.rs:91:9
+   |
+91 |     let mut pat = Pattern {
+   |         ----^^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+error[E0382]: borrow of moved value: `app`
+   --> gui\src-tauri\src\lib.rs:174:21
+    |
+ 52 |     app: AppHandle,
+    |     --- move occurs because `app` has type `AppHandle`, which does not implement the `Copy` trait
+...
+129 |     let result = tokio::task::spawn_blocking(move || {
+    |                                              ------- value moved into closure here
+...
+162 |             let _ = app.emit("search-stats", SearchStatsEvent {
+    |                     --- variable moved due to use in closure
+...
+174 |             let _ = app.emit("search-log", SearchLogEvent {
+    |                     ^^^ value borrowed here after move
+    |
+help: consider cloning the value before moving it into the closure
+    |
+129 ~     let value = app.clone();
+130 ~     let result = tokio::task::spawn_blocking(move || {
+131 |         search.run_with_callback(|stats| {
+...
+162 |
+163 ~             let _ = value.emit("search-stats", SearchStatsEvent {
+    |
+
+For more information about this error, try `rustc --explain E0382`.
+warning: `gui` (lib) generated 1 warning
+error: could not compile `gui` (lib) due to 1 previous error; 1 warning emitted
